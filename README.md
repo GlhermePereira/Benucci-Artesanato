@@ -17,69 +17,53 @@ src/main/java/
 ### Autenticação via JWT
 
 - **Classe `JwtUtils`**
-    - `generateToken(Usuario usuario)` → Gera tokens JWT com algoritmo **HS512**
-    - `getEmailFromToken(String token)` → Extrai o email do token JWT
-    - `validateToken(String token)` → Valida se o token é válido e não expirou
-- Chave segura criada com `Keys.secretKeyFor(SignatureAlgorithm.HS512)`
-- Expiração do token configurável via `application.properties`
+  - `generateToken(Usuario usuario)` → Gera tokens JWT com algoritmo **HS512**
+  - `getEmailFromToken(String token)` → Extrai o email do token JWT
+  - `validateToken(String token)` → Valida se o token é válido e não expirou
+  - `validateToken(String token, Usuario usuario)` → Valida se o token pertence ao usuário e é válido
+- **Chave JWT** configurada no `application.properties` via `jwt.secret`
+- **Expiração do token** configurável via `application.properties` com `jwt.expirationMs`
+- **Segurança:** utiliza algoritmo **HS512** para assinar tokens, garantindo integridade e autenticidade das requisições
 
 ### Usuário
 
 - Entidade `Usuario` com os campos:
-    - `id`, `nome`, `email`, `senha`, `tipo`, `telefone`, `endereco`
+  - `id`, `nome`, `email`, `senha`, `tipo`, `telefone`, `endereco`
 - Consulta por email usando JPA/Hibernate
 
-### Segurança
+### Criptografia de Senha
 
-- JWT utilizado na autenticação
-- Integração com Spring Security via filtros
-
-### Banco de Dados
-
-- Configuração de datasource Hikari
-- EntityManagerFactory inicializado
-- Consultas Hibernate funcionando
+- Senhas armazenadas usando **BCrypt** (hash seguro)
+- Garante que a senha não seja salva em texto puro no banco
+- Comparação de senha na autenticação é feita usando a função de verificação do BCrypt
 
 ## Endpoints Implementados
 
-| Endpoint            | Método | Descrição                                    |
-|--------------------|--------|----------------------------------------------|
-| `/auth/login`       | POST   | Recebe email/senha e gera JWT                |
-| `/usuario/{email}`  | GET    | Busca usuário por email (teste)              |
+| Endpoint                | Método | Descrição                             |
+|------------------------|--------|---------------------------------------|
+| `/auth/login`           | POST   | Recebe email/senha e gera JWT         |
+| `/auth/register`        | POST   | Cria um novo usuário e salva no banco |
+| `/usuario/{id}`         | GET    | Busca usuário pelo ID e pelo JWT      |
+| `/usuario/email/{email}`| GET    | Busca usuário pelo email (teste)      |
 
-## Testes de JWT
+### Exemplo de Requisição Login
 
-Exemplo de testes unitários com **JUnit 5**:
-
-```java
-@Test
-void testGenerateToken() {
-    String token = jwtUtils.generateToken(usuario);
-    assertNotNull(token, "Token não deve ser nulo");
-}
-
-@Test
-void testGetEmailFromToken() {
-    String token = jwtUtils.generateToken(usuario);
-    String email = jwtUtils.getEmailFromToken(token);
-    assertEquals(usuario.getEmail(), email);
-}
-
-@Test
-void testValidateToken() {
-    String token = jwtUtils.generateToken(usuario);
-    assertTrue(jwtUtils.validateToken(token));
-
-    // Token inválido
-    String tokenInvalido = token + "123";
-    assertFalse(jwtUtils.validateToken(tokenInvalido));
+```json
+POST /auth/login
+{
+  "email": "usuario@teste.com",
+  "senha": "senha123"
 }
 ```
+### Exemplo Requisição Register
 
-## Próximos Passos
-
-- Criar testes de integração para os endpoints REST
-- Implementar criptografia de senha com **BCrypt**
-- Gerenciar roles/tipos de usuário para autorização
-- Criar endpoints para cadastro, atualização e remoção de usuários
-- Tratar exceções globais para JWT inválido ou expirado
+```json 
+{
+    "id": 1,
+    "nome": "Joao",
+    "email": "Joao@email.com",
+    "senha": "$2a$10$NlLqy.pEuUP8fqccArV..uLZ1M1LLZBZ13i.CQgvGx70Yqf65kkS2",
+    "telefone": "13988240253",
+    "endereco": "Av. São Paulo, 416 - Boqueirão, Praia Grande - SP, 11701-380",
+    "tipo": "cliente"
+}

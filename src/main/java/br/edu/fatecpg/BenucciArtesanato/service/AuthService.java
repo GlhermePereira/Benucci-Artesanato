@@ -1,6 +1,7 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
 
+import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
 import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
@@ -47,15 +48,15 @@ public class AuthService {
 
     public String authenticateUser(LoginRequest request) {
         Usuario usuario = repository.findByEmail(request.email())
-                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + request.email()));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + request.email()));
 
         if (!encoder.matches(request.senha(), usuario.getSenha())) {
             throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
         }
 
         return jwtUtils.generateToken(usuario);
-
     }
+
 
     @Bean
     CommandLineRunner init(UsuarioRepository repository, PasswordEncoder encoder) {
@@ -85,12 +86,15 @@ public class AuthService {
 
     public String login(LoginRequest request) {
         Usuario usuario = repository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + request.email()));
 
         if (!encoder.matches(request.senha(), usuario.getSenha())) {
-            throw new RuntimeException("Senha inválida");
+            throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
         }
 
         return jwtUtils.generateToken(usuario);
     }
+
+
+
 }
