@@ -22,6 +22,33 @@ public class UsuarioService {
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
+    public Optional<Usuario> getUsuarioById(Long id) {
+        return usuarioRepository.findById(id);
+    }// Adicione na UsuarioService
+    public Usuario buscarPorEmail(String email) {
+        return usuarioRepository.findByEmail(email).orElse(null);
+    }
+
+
+    public Usuario updateUsuario(Long id, Usuario usuarioAtualizado) {
+        return usuarioRepository.findById(id)
+                    .map(usuario -> {
+                        usuario.setNome(usuarioAtualizado.getNome());
+                        usuario.setEmail(usuarioAtualizado.getEmail());
+                        usuario.setTelefone(usuarioAtualizado.getTelefone());
+                        usuario.setEndereco(usuarioAtualizado.getEndereco());
+                        usuario.setTipo(usuarioAtualizado.getTipo());
+                        return usuarioRepository.save(usuario);
+                    }).orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
+
+    }
+
+    public void deleteUsuario(Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            throw new RuntimeException("Usuario nao encontrado");
+        }
+        usuarioRepository.deleteById(id);
+    }
     // Cadastrar novo usuário
     public Usuario cadastrarUsuario(UsuarioDTO dto) {
         Usuario usuario = new Usuario();
@@ -74,4 +101,5 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
         return true;
     }
+
 }

@@ -25,9 +25,10 @@ public class JwtUtils {
     private int jwtExpirationMs;
 
     // Cria a chave de assinatura a partir do jwtSecret
+// Cria a chave de assinatura a partir do jwtSecret (Base64)
     private Key getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret); // se jwt.secret for Base64
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     // Gera o token JWT para um usuário
@@ -53,7 +54,7 @@ public class JwtUtils {
                 .getSubject();
     }
 
-    // Valida o token
+    // Valida o token JWT sem verificar usuário
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
@@ -69,4 +70,13 @@ public class JwtUtils {
         }
         return false;
     }
+
+    // Valida o token e se pertence ao usuário
+    public boolean validateToken(String token, Usuario usuario) {
+        String emailDoToken = getEmailFromToken(token);
+        // Chama o validateToken sem usuário para checar validade do token
+        return emailDoToken.equals(usuario.getEmail()) && validateToken(token);
+    }
+
+
 }

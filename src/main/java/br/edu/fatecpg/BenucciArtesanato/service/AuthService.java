@@ -6,6 +6,11 @@ import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
 import br.edu.fatecpg.BenucciArtesanato.repository.UsuarioRepository;
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.InvalidPasswordException;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.UserNotFoundException;
+import br.edu.fatecpg.BenucciArtesanato.service.validation.UserValidator;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +20,18 @@ public class AuthService {
     private final UsuarioRepository repository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
+    private final UserValidator validator;
 
-    public AuthService(UsuarioRepository repository, PasswordEncoder encoder, JwtUtils jwtUtils) {
+    public AuthService(UsuarioRepository repository,
+                       PasswordEncoder encoder,
+                       JwtUtils jwtUtils,
+                       UserValidator validator) {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
+        this.validator = validator; // agora funciona
     }
+
 
     public Usuario register(RegisterRequest request) {
         Usuario usuario = Usuario.builder()
@@ -33,6 +44,44 @@ public class AuthService {
                 .build();
         return repository.save(usuario);
     }
+
+    public String authenticateUser(LoginRequest request) {
+        Usuario usuario = repository.findByEmail(request.email())
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + request.email()));
+
+        if (!encoder.matches(request.senha(), usuario.getSenha())) {
+            throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
+        }
+
+        return jwtUtils.generateToken(usuario);
+
+    }
+
+    @Bean
+    CommandLineRunner init(UsuarioRepository repository, PasswordEncoder encoder) {
+        return args -> {
+            repository.findByEmail("admin@email.com")
+                    .ifPresentOrElse(
+                            usuario -> {
+                                // garante que a senha está correta
+                                usuario.setSenha(encoder.encode("admin123"));
+                                repository.save(usuario);
+                            },
+                            () -> {
+                                Usuario admin = Usuario.builder()
+                                        .nome("Admin")
+                                        .email("admin@email.com")
+                                        .senha(encoder.encode("admin123"))
+                                        .tipo("admin")
+                                        .build();
+                                repository.save(admin);
+                            }
+                    );
+        };
+    }
+
+
+
 
     public String login(LoginRequest request) {
         Usuario usuario = repository.findByEmail(request.email())
