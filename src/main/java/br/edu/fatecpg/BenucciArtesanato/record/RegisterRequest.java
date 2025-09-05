@@ -1,9 +1,9 @@
 package br.edu.fatecpg.BenucciArtesanato.record;
 
 public record RegisterRequest(
-        String nome,
+        String name,
         String email,
-        String senha,
-        String telefone,
-        String endereco
+        String password,
+        String phoneNumber,
+        String address
 ) {}

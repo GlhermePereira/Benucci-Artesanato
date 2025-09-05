@@ -3,10 +3,10 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
 import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
-import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
+import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
-import br.edu.fatecpg.BenucciArtesanato.repository.UsuarioRepository;
+import br.edu.fatecpg.BenucciArtesanato.repository.UserRepository;
 import br.edu.fatecpg.BenucciArtesanato.service.exception.InvalidPasswordException;
 import br.edu.fatecpg.BenucciArtesanato.service.validation.UserValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock
-    private UsuarioRepository repository;
+    private UserRepository repository;
 
     @Mock
     private PasswordEncoder encoder;
@@ -39,7 +39,7 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    private Usuario usuario;
+    private User usuario;
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
 
@@ -47,14 +47,14 @@ class AuthServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        usuario = Usuario.builder()
+        usuario = User.builder()
                 .id(1L)
-                .nome("Joao")
+                .name("Joao")
                 .email("joao@email.com")
-                .senha("hashedSenha")
-                .telefone("13988240253")
-                .endereco("Av. São Paulo, 416")
-                .tipo("cliente")
+                .password("hashedSenha")
+                .phoneNumber("13988240253")
+                .address("Av. São Paulo, 416")
+                .type("cliente")
                 .build();
 
         registerRequest = new RegisterRequest(
@@ -66,20 +66,20 @@ class AuthServiceTest {
 
     @Test
     void testRegisterSuccess() {
-        when(encoder.encode(registerRequest.senha())).thenReturn("hashedSenha");
-        when(repository.save(any(Usuario.class))).thenReturn(usuario);
+        when(encoder.encode(registerRequest.password())).thenReturn("hashedSenha");
+        when(repository.save(any(User.class))).thenReturn(usuario);
 
-        Usuario savedUser = authService.register(registerRequest);
+        User savedUser = authService.register(registerRequest);
 
         assertNotNull(savedUser, "O usuário registrado não deve ser nulo");
         assertEquals(usuario.getEmail(), savedUser.getEmail(), "O email do usuário deve ser igual");
-        verify(repository, times(1)).save(any(Usuario.class));
+        verify(repository, times(1)).save(any(User.class));
     }
 
     @Test
     void testAuthenticateUserSuccess() {
         when(repository.findByEmail(loginRequest.email())).thenReturn(Optional.of(usuario));
-        when(encoder.matches(loginRequest.senha(), usuario.getSenha())).thenReturn(true);
+        when(encoder.matches(loginRequest.password(), usuario.getPassword())).thenReturn(true);
         when(jwtUtils.generateToken(usuario)).thenReturn("token123");
 
         String token = authService.authenticateUser(loginRequest);
@@ -101,19 +101,19 @@ class AuthServiceTest {
     @Test
     void testAuthenticateUserInvalidPassword() {
         when(repository.findByEmail(loginRequest.email())).thenReturn(Optional.of(usuario));
-        when(encoder.matches(loginRequest.senha(), usuario.getSenha())).thenReturn(false);
+        when(encoder.matches(loginRequest.password(), usuario.getPassword())).thenReturn(false);
 
         InvalidPasswordException exception = assertThrows(InvalidPasswordException.class, () -> {
             authService.authenticateUser(loginRequest);
         });
 
-        assertTrue(exception.getMessage().contains("Senha inválida"), "Mensagem de erro deve indicar senha inválida");
+        assertTrue(exception.getMessage().contains("Senha inválida"), "Mensagem de erro deve indicar password inválida");
     }
 
     @Test
     void testLoginSuccess() {
         when(repository.findByEmail(loginRequest.email())).thenReturn(Optional.of(usuario));
-        when(encoder.matches(loginRequest.senha(), usuario.getSenha())).thenReturn(true);
+        when(encoder.matches(loginRequest.password(), usuario.getPassword())).thenReturn(true);
         when(jwtUtils.generateToken(usuario)).thenReturn("tokenLogin");
 
         String token = authService.login(loginRequest);
@@ -135,13 +135,13 @@ class AuthServiceTest {
     @Test
     void testLoginInvalidPassword() {
         when(repository.findByEmail(loginRequest.email())).thenReturn(Optional.of(usuario));
-        when(encoder.matches(loginRequest.senha(), usuario.getSenha())).thenReturn(false);
+        when(encoder.matches(loginRequest.password(), usuario.getPassword())).thenReturn(false);
 
         InvalidPasswordException exception = assertThrows(InvalidPasswordException.class, () -> {
             authService.login(loginRequest);
         });
 
-        assertTrue(exception.getMessage().contains("Senha inválida"), "Mensagem deve indicar senha incorreta");
+        assertTrue(exception.getMessage().contains("Senha inválida"), "Mensagem deve indicar password incorreta");
     }
 
     @Test
@@ -151,12 +151,12 @@ class AuthServiceTest {
 
         authService.init(repository, encoder).run();
 
-        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(repository, times(1)).save(captor.capture());
-        Usuario savedAdmin = captor.getValue();
+        User savedAdmin = captor.getValue();
 
-        assertEquals("Admin", savedAdmin.getNome(), "O admin criado deve ter nome 'Admin'");
+        assertEquals("Admin", savedAdmin.getName(), "O admin criado deve ter name 'Admin'");
         assertEquals("admin@email.com", savedAdmin.getEmail(), "O email do admin deve ser 'admin@email.com'");
-        assertEquals("encodedAdmin123", savedAdmin.getSenha(), "A senha deve estar codificada corretamente");
+        assertEquals("encodedAdmin123", savedAdmin.getPassword(), "A password deve estar codificada corretamente");
     }
 }

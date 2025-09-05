@@ -1,6 +1,6 @@
 package br.edu.fatecpg.BenucciArtesanato.config;
 
-import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
+import br.edu.fatecpg.BenucciArtesanato.model.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -27,17 +27,17 @@ public class JwtUtils {
     // Cria a chave de assinatura a partir do jwtSecret
 // Cria a chave de assinatura a partir do jwtSecret (Base64)
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret); // se jwt.secret for Base64
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Gera o token JWT para um usuário
-    public String generateToken(Usuario usuario) {
+
+    //
+    public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(usuario.getEmail())
-                .claim("id", usuario.getId())
-                .claim("nome", usuario.getNome())
-                .claim("tipo", usuario.getTipo())
+                .setSubject(user.getEmail())
+                .claim("id", user.getId())
+                .claim("name", user.getName())
+                .claim("type", user.getType())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
@@ -55,27 +55,27 @@ public class JwtUtils {
     }
 
     // Valida o token JWT sem verificar usuário
-    public boolean validateToken(String token) {
+    public boolean IsValidateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
-            logger.error("Token JWT inválido: {}", e.getMessage());
+            logger.error("Invalid Token JWT: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("Token JWT expirado: {}", e.getMessage());
+            logger.error("Token JWT expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("Token JWT não suportado: {}", e.getMessage());
+            logger.error("Token JWT not suported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("JWT vazio ou nulo: {}", e.getMessage());
+            logger.error("JWT empty or null: {}", e.getMessage());
         }
         return false;
     }
 
     // Valida o token e se pertence ao usuário
-    public boolean validateToken(String token, Usuario usuario) {
-        String emailDoToken = getEmailFromToken(token);
+    public boolean IsValidateToken(String token, User user) {
+        String emailToken = getEmailFromToken(token);
         // Chama o validateToken sem usuário para checar validade do token
-        return emailDoToken.equals(usuario.getEmail()) && validateToken(token);
+        return emailToken.equals(user.getEmail()) && IsValidateToken(token);
     }
 
 

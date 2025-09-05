@@ -2,13 +2,12 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 
 import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
-import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
+import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
-import br.edu.fatecpg.BenucciArtesanato.repository.UsuarioRepository;
+import br.edu.fatecpg.BenucciArtesanato.repository.UserRepository;
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
 import br.edu.fatecpg.BenucciArtesanato.service.exception.InvalidPasswordException;
-import br.edu.fatecpg.BenucciArtesanato.service.exception.UserNotFoundException;
 import br.edu.fatecpg.BenucciArtesanato.service.validation.UserValidator;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -18,12 +17,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private final UsuarioRepository repository;
+    private final UserRepository repository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final UserValidator validator;
 
-    public AuthService(UsuarioRepository repository,
+    public AuthService(UserRepository repository,
                        PasswordEncoder encoder,
                        JwtUtils jwtUtils,
                        UserValidator validator) {
@@ -34,46 +33,48 @@ public class AuthService {
     }
 
 
-    public Usuario register(RegisterRequest request) {
-        Usuario usuario = Usuario.builder()
-                .nome(request.nome())
+    public User register(RegisterRequest request) {
+        User user = User.builder()
+                .name(request.name())
                 .email(request.email())
-                .senha(encoder.encode(request.senha()))
-                .telefone(request.telefone())
-                .endereco(request.endereco())
-                .tipo("cliente")
+                .password(encoder.encode(request.password()))
+                .phoneNumber(request.phoneNumber())
+                .address(request.address())
+                .type("customer")
                 .build();
-        return repository.save(usuario);
+        return repository.save(user);
     }
 
     public String authenticateUser(LoginRequest request) {
-        Usuario usuario = repository.findByEmail(request.email())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + request.email()));
+        User user = repository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User not founded: " + request.email()));
 
-        if (!encoder.matches(request.senha(), usuario.getSenha())) {
+        if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
         }
 
-        return jwtUtils.generateToken(usuario);
+        return jwtUtils.generateToken(user);
     }
 
 
     @Bean
-    CommandLineRunner init(UsuarioRepository repository, PasswordEncoder encoder) {
+    CommandLineRunner init(UserRepository repository, PasswordEncoder encoder) {
         return args -> {
             repository.findByEmail("admin@email.com")
                     .ifPresentOrElse(
                             usuario -> {
-                                // garante que a senha está correta
-                                usuario.setSenha(encoder.encode("admin123"));
+                                // garante que a password está correta
+                                usuario.setPassword(encoder.encode("admin123"));
                                 repository.save(usuario);
                             },
                             () -> {
-                                Usuario admin = Usuario.builder()
-                                        .nome("Admin")
+                                User admin = User.builder()
+                                        .name("Admin")
                                         .email("admin@email.com")
-                                        .senha(encoder.encode("admin123"))
-                                        .tipo("admin")
+                                        .password(encoder.encode("admin123"))
+                                        .type("admin")
+                                        .phoneNumber("1398812029")
+                                        .address("Av. Pres. Kennedy, 1405 - Guilhermina, Praia Grande - SP, 11702-205")
                                         .build();
                                 repository.save(admin);
                             }
@@ -85,14 +86,14 @@ public class AuthService {
 
 
     public String login(LoginRequest request) {
-        Usuario usuario = repository.findByEmail(request.email())
+        User user = repository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + request.email()));
 
-        if (!encoder.matches(request.senha(), usuario.getSenha())) {
+        if (!encoder.matches(request.password(), user.getPassword())) {
             throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
         }
 
-        return jwtUtils.generateToken(usuario);
+        return jwtUtils.generateToken(user);
     }
 
 

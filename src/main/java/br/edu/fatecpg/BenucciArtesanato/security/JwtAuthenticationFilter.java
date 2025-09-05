@@ -1,6 +1,6 @@
 package br.edu.fatecpg.BenucciArtesanato.security;
 
-import br.edu.fatecpg.BenucciArtesanato.service.UsuarioService;
+import br.edu.fatecpg.BenucciArtesanato.service.UserService;
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private UsuarioService usuarioService;
+    private UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,10 +32,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            String email = jwtUtils.getEmailFromToken(token); // ou método equivalente
-            var usuario = usuarioService.buscarPorEmail(email);
-            if (usuario != null && jwtUtils.validateToken(token, usuario)) {
-                var authToken = new UsernamePasswordAuthenticationToken(usuario, null, List.of());
+            String email = jwtUtils.getEmailFromToken(token);
+            var user = userService.searchByEmail(email);
+            if (user != null && jwtUtils.IsValidateToken(token, user)) {
+                var authToken = new UsernamePasswordAuthenticationToken(user, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
 

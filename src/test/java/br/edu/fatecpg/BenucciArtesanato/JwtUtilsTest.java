@@ -1,7 +1,7 @@
 package br.edu.fatecpg.BenucciArtesanato;
 
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
-import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
+import br.edu.fatecpg.BenucciArtesanato.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,16 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwtUtilsTest {
 
     private JwtUtils jwtUtils;
-    private Usuario usuario;
+    private User usuario;
 
     @BeforeEach
     void setUp() {
         jwtUtils = new JwtUtils();
-        usuario = new Usuario();
+        usuario = new User();
         usuario.setId(1L);
-        usuario.setNome("Teste Usuario");
+        usuario.setName("Teste User");
         usuario.setEmail("teste@email.com");
-        usuario.setTipo("ADMIN");
+        usuario.setType("ADMIN");
     }
 
     @Test
@@ -39,10 +39,10 @@ class JwtUtilsTest {
     @Test
     void testValidateToken() {
         String token = jwtUtils.generateToken(usuario);
-        assertTrue(jwtUtils.validateToken(token), "Token válido deve retornar true");
+        assertTrue(jwtUtils.IsValidateToken(token), "Token válido deve retornar true");
 
         // Teste com token inválido
         String tokenInvalido = token + "123";
-        assertFalse(jwtUtils.validateToken(tokenInvalido), "Token alterado deve retornar false");
+        assertFalse(jwtUtils.IsValidateToken(tokenInvalido), "Token alterado deve retornar false");
     }
 }

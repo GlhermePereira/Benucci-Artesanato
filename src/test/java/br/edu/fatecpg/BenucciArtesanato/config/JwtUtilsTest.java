@@ -1,7 +1,7 @@
 
 package br.edu.fatecpg.BenucciArtesanato.config;
 
-import br.edu.fatecpg.BenucciArtesanato.model.Usuario;
+import br.edu.fatecpg.BenucciArtesanato.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,9 @@ public class JwtUtilsTest {
 
     @Test
     public void testGenerateToken() {
-        Usuario usuario = Usuario.builder()
+        User usuario = User.builder()
                 .email("teste@email.com")
-                .nome("Teste")
+                .name("Teste")
                 .build();
 
         String token = jwtUtils.generateToken(usuario);
@@ -31,21 +31,21 @@ public class JwtUtilsTest {
 
     @Test
     public void testValidateToken() {
-        Usuario usuario = Usuario.builder()
+        User usuario = User.builder()
                 .email("teste@email.com")
-                .nome("Teste")
+                .name("Teste")
                 .build();
 
         String token = jwtUtils.generateToken(usuario);
 
-        assertTrue(jwtUtils.validateToken(token), "O token deve ser válido");
+        assertTrue(jwtUtils.IsValidateToken(token), "O token deve ser válido");
     }
 
     @Test
     public void testGetEmailFromToken() {
-        Usuario usuario = Usuario.builder()
+        User usuario = User.builder()
                 .email("teste@email.com")
-                .nome("Teste")
+                .name("Teste")
                 .build();
 
         String token = jwtUtils.generateToken(usuario);
