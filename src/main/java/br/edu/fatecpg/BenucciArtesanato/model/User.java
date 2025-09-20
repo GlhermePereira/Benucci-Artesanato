@@ -1,14 +1,15 @@
 package br.edu.fatecpg.BenucciArtesanato.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
 
 @Entity
-@Table(name = "\"user\"") // obrigatório por causa do nome reservado
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "\"user\"")
+@Getter
+@Setter
 public class User {
 
     @Id
@@ -16,10 +17,25 @@ public class User {
     private Long id;
 
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
-    private String password; // hash da password
-    @Column(name = "phone_number")
+
+    @Column(nullable = false)
+    private String password;
+
+    private String cpf;
+
     private String phoneNumber;
+
     private String address;
-    private String type; // cliente/admin
+
+    @Column(nullable = false)
+    private String type; // customer ou admin
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews;
 }
