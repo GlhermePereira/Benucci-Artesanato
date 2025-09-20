@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 public class PaymentService {
 
     private final PaymentRepository repository;
-    @Value("${mercado.pago.access-token}")
+    @Value("${'mercadopago.access-token}")
     private String mercadoPagoAccessToken;
 
     public PaymentService(PaymentRepository repository) {

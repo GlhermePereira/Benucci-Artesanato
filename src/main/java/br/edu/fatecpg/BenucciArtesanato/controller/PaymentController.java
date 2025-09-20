@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 @RequestMapping("/api/payments")
 public class PaymentController {
 
-    @Value("${mercado.pago.access-token}")
+    @Value("${mercadopago.access-token}")
     private String accessToken;
 
     @PostMapping("/pix")
