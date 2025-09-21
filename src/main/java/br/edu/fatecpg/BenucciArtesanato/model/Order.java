@@ -27,9 +27,6 @@ public class Order {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
-    private String status;
-
     @Column(name = "delivery_type")
     private String deliveryType;
 
@@ -50,4 +47,23 @@ public class Order {
     @ToString.Exclude
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
+
+    // Enum para status
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus status = OrderStatus.pending; // default
+
+    public enum OrderStatus {
+        pending, preparing, shipped, delivered, canceled;
+
+        public static OrderStatus fromString(String status) {
+            for (OrderStatus s : OrderStatus.values()) {
+                if (s.name().equalsIgnoreCase(status)) {
+                    return s;
+                }
+            }
+            throw new IllegalArgumentException("Status inválido: " + status);
+        }
+    }
+
 }
