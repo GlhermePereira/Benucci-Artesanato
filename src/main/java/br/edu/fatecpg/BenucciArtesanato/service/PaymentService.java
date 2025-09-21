@@ -1,84 +1,80 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.model.Order;
-import br.edu.fatecpg.BenucciArtesanato.record.dto.*;
-import br.edu.fatecpg.BenucciArtesanato.repository.OrderRepository;
-import com.mercadopago.MercadoPagoConfig;
-import com.mercadopago.client.preference.PreferenceClient;
-import com.mercadopago.client.preference.PreferenceCreateRequest;
-import com.mercadopago.client.preference.PreferencePayerRequest;
-import com.mercadopago.client.preference.PreferenceItemRequest;
-import org.springframework.beans.factory.annotation.Value;
+import br.edu.fatecpg.BenucciArtesanato.model.OrderItem;
+import br.edu.fatecpg.BenucciArtesanato.model.Payment;
+import br.edu.fatecpg.BenucciArtesanato.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import java.util.stream.Collectors;
-import java.math.BigDecimal;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
-    @Value("${mercadopago.access-token}")
-    private String accessToken;
+    private final PaymentRepository paymentRepository;
+    private final WebClient mercadoPagoWebClient;
+    private final OrderService orderService; // 👈 injete o OrderService aqui
+    public Payment createPayment(Order order) {
+        try {
+            // Monta lista de itens
+            List<Map<String, Object>> itemsList = new ArrayList<>();
+            for (OrderItem item : order.getItems()) {
+                Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put("id", item.getId().toString());
+                itemMap.put("title", item.getProductName());
+                itemMap.put("quantity", item.getQuantity());
+                itemMap.put("unit_price", item.getUnitPrice());
+                itemMap.put("currency_id", "BRL");
+                itemsList.add(itemMap);
+            }
 
-    private final OrderRepository orderRepository;
+            // Monta request
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("items", itemsList);
+            requestBody.put("back_urls", Map.of(
+                    "success", "https://yourapp.com/success",
+                    "failure", "https://yourapp.com/failure",
+                    "pending", "https://yourapp.com/pending"
+            ));
+            requestBody.put("auto_return", "all");
+            requestBody.put("binary_mode", true);
+            requestBody.put("external_reference", order.getId().toString());
 
-    public PaymentService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
+            // Chamada à API Mercado Pago
+            Map<String, Object> response = mercadoPagoWebClient.post()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-    public PaymentResponseDTO createPreference(PaymentPreferenceRequestDTO requestDTO) throws Exception {
-        MercadoPagoConfig.setAccessToken(accessToken);
+            // Cria Payment
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setAmount(order.getTotalAmount());
+            payment.setStatus("pending");
 
-        PreferenceClient client = new PreferenceClient();
+            if (response != null) {
+                payment.setMpPreferenceId(String.valueOf(response.get("id")));
+                payment.setInitPoint(String.valueOf(response.get("init_point")));
+                payment.setSandboxLink(String.valueOf(response.get("sandbox_init_point")));
+            }
 
-        // Monta os itens da preferência
-        var items = requestDTO.items().stream()
-                .map(i -> PreferenceItemRequest.builder()
-                        .title(i.title())
-                        .quantity(i.quantity())
-                        .unitPrice(i.unitPrice())
-                        .currencyId("BRL")
-                        .build())
-                .collect(Collectors.toList());
+            Payment savedPayment = paymentRepository.save(payment);
 
-        // Monta payer (apenas email é obrigatório para sandbox)
-        var payer = PreferencePayerRequest.builder()
-                .email(requestDTO.user().email())
-                .build();
+// Atualiza Order com mpPreferenceId
+            order.setMpPreferenceId(savedPayment.getMpPreferenceId());
+            orderService.updateOrder(order); // ✅ correto
 
-        // Cria a preferência
-        var preferenceRequest = PreferenceCreateRequest.builder()
-                .items(items)
-                .payer(payer)
-                .build();
+            return savedPayment;
 
-        var preference = client.create(preferenceRequest);
 
-        // Salva no banco
-        Order order = new Order();
-        order.setUserName(requestDTO.user().name());
-        order.setUserEmail(requestDTO.user().email());
-        order.setUserCpf(requestDTO.user().cpf());
-        order.setAddress(requestDTO.user().address());
-        order.setPhoneNumber(requestDTO.user().phoneNumber());
-        order.setItemsJson(items.toString());
-        order.setTotalAmount(
-                requestDTO.items().stream()
-                        .map(i -> i.unitPrice().multiply(BigDecimal.valueOf(i.quantity())))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add)
-        );
-        order.setStatus("pending");
-        order.setPaymentId(String.valueOf(preference.getId()));
-        order.setSandboxUrl(preference.getSandboxInitPoint());
-        order.setProductionUrl(preference.getInitPoint());
-
-        orderRepository.save(order);
-
-        return new PaymentResponseDTO(
-                String.valueOf(preference.getId()),
-                order.getTotalAmount(),
-                order.getStatus(),
-                preference.getSandboxInitPoint(),
-                preference.getInitPoint()
-        );
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao criar preferência de pagamento: " + e.getMessage(), e);
+        }
     }
 }

@@ -19,8 +19,6 @@ public class UserValidator {
         if (!request.password().matches("^\\d{10,11}$")) {
             throw new IllegalArgumentException("Telefone deve ter 10 ou 11 dígitos numéricos");
         }
-        if (request.address() == null || request.address().isBlank()) {
-            throw new IllegalArgumentException("Endereço é obrigatório");
-        }
+
     }
 }

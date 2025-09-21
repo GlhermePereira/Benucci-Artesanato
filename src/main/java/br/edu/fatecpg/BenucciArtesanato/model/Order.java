@@ -4,15 +4,18 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "\"order\"")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,10 +28,10 @@ public class Order {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    private String status; // pending, preparing, shipped, delivered, canceled
+    private String status;
 
     @Column(name = "delivery_type")
-    private String deliveryType; // pickup, delivery
+    private String deliveryType;
 
     @Column(name = "delivery_address", columnDefinition = "TEXT")
     private String deliveryAddress;
@@ -39,9 +42,12 @@ public class Order {
     @Column(name = "mp_preference_id")
     private String mpPreferenceId;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items;
+    @ToString.Exclude
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
 
+    @ToString.Exclude
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
 }

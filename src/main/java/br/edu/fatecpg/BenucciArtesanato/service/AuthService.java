@@ -40,6 +40,7 @@ public class AuthService {
                 .password(encoder.encode(request.password()))
                 .phoneNumber(request.phoneNumber())
                 .address(request.address())
+                .cpf(request.cpf())
                 .type("customer")
                 .build();
         return repository.save(user);

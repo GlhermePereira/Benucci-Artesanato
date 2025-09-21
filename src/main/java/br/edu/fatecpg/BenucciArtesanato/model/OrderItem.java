@@ -6,11 +6,13 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_item")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class OrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,12 +25,11 @@ public class OrderItem {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @Column(name = "product_name", nullable = false)
+    @Column(name = "product_name")
     private String productName;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "unit_price", precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(nullable = false)
     private Integer quantity;
 }
