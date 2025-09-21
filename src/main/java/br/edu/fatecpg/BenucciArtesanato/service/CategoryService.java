@@ -8,12 +8,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
+    // Listar todas as categorias
     public List<CategoryDto> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(category -> CategoryDto.builder()
@@ -24,11 +26,11 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    // Criar nova categoria
     public CategoryDto createCategory(CategoryDto dto) {
+        // Verifica se já existe categoria com o mesmo nome
         categoryRepository.findByName(dto.getName())
-                .ifPresent(cat -> {
-                    throw new RuntimeException("Categoria já existe");
-                });
+                .ifPresent(cat -> { throw new RuntimeException("Categoria já existe"); });
 
         Category category = Category.builder()
                 .name(dto.getName())
