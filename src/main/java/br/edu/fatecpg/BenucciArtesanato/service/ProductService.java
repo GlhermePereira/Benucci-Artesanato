@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -26,14 +27,42 @@ public class ProductService {
     }
 
     // Buscar produto por ID
-    public Product getById(Long id) {
-        return productRepository.findById(id).orElse(null);
+
+    public ProductDTO getProductDTOById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setCategoryId(product.getCategory().getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
+
+        return dto;
     }
 
-    // Listar todos os produtos
-    public List<Product> getAll() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAllDTO() {
+        return productRepository.findAll()
+                .stream()
+                .map(this::convertToDTO)
+                .toList();
     }
+
+    private ProductDTO convertToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setCategoryId(product.getCategory().getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
+        return dto;
+    }
+
 
     // Criar novo produto
     public Product createProduct(ProductDTO dto) {

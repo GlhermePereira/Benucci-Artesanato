@@ -1,5 +1,7 @@
 package br.edu.fatecpg.BenucciArtesanato.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -38,8 +40,10 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ToString.Exclude
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
+
+
 }

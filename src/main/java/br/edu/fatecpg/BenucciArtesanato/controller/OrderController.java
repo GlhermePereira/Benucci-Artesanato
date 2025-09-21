@@ -44,8 +44,8 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderDTO>> getUserOrders(@PathVariable Long usuarioId) {
-        return ResponseEntity.ok(orderService.getUserOrders(usuarioId));
+    public ResponseEntity<List<OrderDTO>> getUserOrders(@PathVariable Long userId) {
+        return ResponseEntity.ok(orderService.getUserOrders(userId));
     }
 
     @PutMapping("/status/{id}")
