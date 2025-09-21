@@ -43,7 +43,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderDetails(id));
     }
 
-    @GetMapping("/usuario/{usuarioId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<List<OrderDTO>> getUserOrders(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(orderService.getUserOrders(usuarioId));
     }

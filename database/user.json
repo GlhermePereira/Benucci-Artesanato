@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Lucca Matheus Pereira",
+    "email": "luccamatheuspereira@gmail.com",
+    "password": "QqXhRGU161",
+    "phoneNumber": "(96) 2516-1477",
+    "address": "Rua Eli Rodrigues, 120, Centro, Manaus, AM",
+    "type": "customer",
+    "cpf": "296.191.227-04"
+  },
+  {
+    "name": "Ana Clara Souza",
+    "email": "anaclara.souza@gmail.com",
+    "password": "AnaC2025!",
+    "phoneNumber": "(11) 91234-5678",
+    "address": "Rua das Flores, 123, Jardim Paulista, São Paulo, SP",
+    "type": "customer",
+    "cpf": "123.456.789-09"
+  },
+  {
+    "name": "Bruno Henrique Lima",
+    "email": "bruno.lima@hotmail.com",
+    "password": "BrunoL!23",
+    "phoneNumber": "(21) 99876-5432",
+    "address": "Avenida Atlântica, 456, Copacabana, Rio de Janeiro, RJ",
+    "type": "customer",
+    "cpf": "987.654.321-00"
+  },
+  {
+    "name": "Carla Beatriz Santos",
+    "email": "carla.santos@gmail.com",
+    "password": "CarlaB2025",
+    "phoneNumber": "(31) 93456-7890",
+    "address": "Rua do Sol, 78, Lourdes, Belo Horizonte, MG",
+    "type": "customer",
+    "cpf": "321.654.987-11"
+  },
+  {
+    "name": "Diego Rafael Oliveira",
+    "email": "diego.oliveira@gmail.com",
+    "password": "DiegoR@2025",
+    "phoneNumber": "(41) 91234-0000",
+    "address": "Rua das Palmeiras, 9, Centro, Curitiba, PR",
+    "type": "customer",
+    "cpf": "456.789.123-22"
+  },
+  {
+    "name": "Fernanda Lima Costa",
+    "email": "fernanda.costa@hotmail.com",
+    "password": "Fern@nda2025",
+    "phoneNumber": "(51) 99888-7777",
+    "address": "Avenida Central, 321, Porto Alegre, RS",
+    "type": "customer",
+    "cpf": "654.321.987-33"
+  },
+  {
+    "name": "Gabriel Martins Souza",
+    "email": "gabriel.souza@gmail.com",
+    "password": "GabrielM!25",
+    "phoneNumber": "(61) 91234-4321",
+    "address": "Rua Nova Esperança, 12, Asa Sul, Brasília, DF",
+    "type": "customer",
+    "cpf": "789.123.456-44"
+  },
+  {
+    "name": "Helena Rodrigues",
+    "email": "helena.rodrigues@gmail.com",
+    "password": "Hel3naR2025",
+    "phoneNumber": "(71) 92345-6789",
+    "address": "Rua das Acácias, 50, Pituba, Salvador, BA",
+    "type": "customer",
+    "cpf": "159.753.486-55"
+  },
+  {
+    "name": "Igor Fernandes",
+    "email": "igor.fernandes@gmail.com",
+    "password": "Ig0rF3rn25",
+    "phoneNumber": "(81) 93456-7891",
+    "address": "Rua das Laranjeiras, 15, Boa Viagem, Recife, PE",
+    "type": "customer",
+    "cpf": "753.159.486-66"
+  },
+  {
+    "name": "Julia Andrade",
+    "email": "julia.andrade@gmail.com",
+    "password": "Jul!And2025",
+    "phoneNumber": "(91) 91234-8765",
+    "address": "Rua do Comércio, 88, Nazaré, Belém, PA",
+    "type": "customer",
+    "cpf": "951.357.852-77"
+  }
+]
