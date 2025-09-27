@@ -163,8 +163,8 @@ src/main/java/
 `GET /recomendacoes/populares` → Produtos mais vendidos em determinada época
 
 ## Participantes do Projeto
-• Camile
-• Diego
-• Anthony
-• Guilherme Pereira
-• Pedro
+- Camile
+- Diego
+- Anthony
+- Guilherme Pereira
+- Pedro
