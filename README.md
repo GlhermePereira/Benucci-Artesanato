@@ -41,6 +41,11 @@
 
 - Oferece uma experiência de compra digital, intuitiva e eficiente, expandindo o alcance da loja para além do espaço físico.
 
+## Video de apresentação das rotas do projeto:
+
+- [📹 Vídeo completo (5 min) - Todas as rotas da API](https://youtu.be/1cY8_ThwrnM)
+- [📹 Vídeo rápido (2 min) - Cadastro e Login](https://youtube.com/shorts/knjXf-JJch4?feature=share)
+
 ## Estrutura do Projeto
 
 ```
@@ -157,7 +162,3 @@ src/main/java/
 
 `GET /recomendacoes/populares` → Produtos mais vendidos em determinada época
 
-
-## Video de apresentação das rotas do projeto:
-
-- [📹 Vídeo completo (5 min) - Todas as rotas da API](https://youtu.be/1cY8_ThwrnM)
