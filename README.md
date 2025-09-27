@@ -1,5 +1,48 @@
 # Documentação da Aplicação BenucciArtesanato
 
+## Benucci Artes – Aplicativo Mobile de Artesanato
+## Introdução
+
+- O Benucci Artes é um aplicativo mobile desenvolvido em React Native, com backend em Spring Boot e banco de dados relacional. O objetivo é conectar artesãos e clientes através da tecnologia, ampliando a visibilidade dos produtos artesanais e oferecendo uma experiência de compra moderna e prática.
+
+## Visão da Loja
+
+- Marketplace especializado em produtos artesanais únicos
+
+- Plataforma que valoriza o trabalho manual e original
+
+- Experiência personalizada e segura para o cliente
+
+## Diferencial Competitivo
+
+- Tecnologia robusta por trás de um catálogo curado
+
+- Sistema de recomendações inteligente (categorias, temas e mais vendidos)
+
+## Processo de compra simplificado e confiável
+
+## Cliente
+
+- Priscila – Benucci Artes Artesanato
+
+## Problemática
+
+- Dificuldade em divulgar produtos além da loja física
+
+- Clientes não sabem os itens disponíveis em tempo real
+
+- A loja não consegue prever quais produtos terão mais saída em certas épocas (ex.: Natal, Dia das Mães, Festas Juninas)
+
+## Solução
+
+- O Benucci Artes propõe o desenvolvimento de um aplicativo mobile que:
+
+- Disponibiliza um catálogo em tempo real, resolvendo a falta de visibilidade.
+
+- Integra uma API REST em Spring Boot, responsável pela gestão e classificação dos produtos.
+
+- Oferece uma experiência de compra digital, intuitiva e eficiente, expandindo o alcance da loja para além do espaço físico.
+
 ## Estrutura do Projeto
 
 ```
