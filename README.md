@@ -156,3 +156,8 @@ src/main/java/
 `GET /recomendacoes/{usuarioId}` → Recomendações personalizadas
 
 `GET /recomendacoes/populares` → Produtos mais vendidos em determinada época
+
+
+## Video de apresentação das rotas do projeto:
+
+- [📹 Vídeo completo (5 min) - Todas as rotas da API](https://youtu.be/1cY8_ThwrnM)
