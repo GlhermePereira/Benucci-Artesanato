@@ -1,5 +1,3 @@
-# Documentação da Aplicação BenucciArtesanato
-
 ## Benucci Artes – Aplicativo Mobile de Artesanato
 ## Introdução
 
