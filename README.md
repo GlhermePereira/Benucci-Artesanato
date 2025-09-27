@@ -17,7 +17,7 @@
 
 - Sistema de recomendações inteligente (categorias, temas e mais vendidos)
 
-## Processo de compra simplificado e confiável
+- Processo de compra simplificado e confiável
 
 ## Cliente
 
@@ -162,3 +162,9 @@ src/main/java/
 
 `GET /recomendacoes/populares` → Produtos mais vendidos em determinada época
 
+## Participantes do Projeto
+• Camile
+• Diego
+• Anthony
+• Guilherme Pereira
+• Pedro
