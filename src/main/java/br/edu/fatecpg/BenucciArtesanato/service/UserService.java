@@ -1,63 +1,73 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
-
 import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.repository.UserRepository;
-import br.edu.fatecpg.BenucciArtesanato.record.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import br.edu.fatecpg.BenucciArtesanato.record.dto.UserDTO;
 
 import java.util.Optional;
+import java.util.List;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-    }
+    private PasswordEncoder passwordEncoder;
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }// Adicione na UserService
     public User searchByEmail(String email) {
-        return userRepository.findByEmail(email).orElse(null);
+        Optional<User> user = userRepository.findByEmail(email);
+        return user.orElse(null);
     }
 
-
-    public User updateUser(Long id, User updateUser) {
-        return userRepository.findById(id)
-                    .map(user -> {
-                        user.setName(updateUser.getName());
-                        user.setEmail(updateUser.getEmail());
-                        user.setPhoneNumber(updateUser.getPhoneNumber());
-                        user.setAddress(updateUser.getAddress());
-                        user.setType(updateUser.getType());
-                        return userRepository.save(user);
-                    }).orElseThrow(() -> new RuntimeException("User not found"));
-
+    // List all users
+    public List<User> getAll() {
+        return userRepository.findAll();
     }
 
-    // Cadastrar novo usuário
+    // Get by id
+    public User getById(Long id) {
+        Optional<User> user = userRepository.findById(id);
+        return user.orElse(null);
+    }
+
+    // Register new user
     public User registerUser(UserDTO dto) {
+        if (dto == null) return null;
+
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new RuntimeException("Email já cadastrado");
+        }
+
         User user = new User();
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword())); // hash da password
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        // set optional fields if present
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setAddress(dto.getAddress());
-        user.setType(dto.getType());
+        // map incoming DTO.type to security role field
+        if (dto.getType() != null) {
+            String t = dto.getType().toLowerCase();
+            if (t.contains("admin")) user.setRole("ROLE_ADMIN");
+            else user.setRole("ROLE_USER");
+        } else {
+            user.setRole("ROLE_USER");
+        }
+        user.setCpf(dto.getCpf());
+
         return userRepository.save(user);
     }
 
-    // Autenticar usuário
+    // Authenticate
     public User autenticar(String email, String senha) {
         Optional<User> userOpt = userRepository.findByEmail(email);
+
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (passwordEncoder.matches(senha, user.getPassword())) {
@@ -67,32 +77,36 @@ public class UserService {
         return null;
     }
 
-    // Buscar por ID
-    public User getById(Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    // Atualizar usuário
+    // Update user
     public User updateUser(Long id, UserDTO dto) {
         Optional<User> userOpt = userRepository.findById(id);
-        if (userOpt.isEmpty()) return null;
 
-        User user = userOpt.get();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+
+            if (dto.getName() != null) user.setName(dto.getName());
+            if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+            if (dto.getPassword() != null) user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            if (dto.getPhoneNumber() != null) user.setPhoneNumber(dto.getPhoneNumber());
+            if (dto.getAddress() != null) user.setAddress(dto.getAddress());
+            if (dto.getType() != null) {
+                String t = dto.getType().toLowerCase();
+                if (t.contains("admin")) user.setRole("ROLE_ADMIN");
+                else user.setRole("ROLE_USER");
+            }
+            if (dto.getCpf() != null) user.setCpf(dto.getCpf());
+
+            return userRepository.save(user);
         }
-        user.setAddress(dto.getAddress());
-        user.setType(dto.getType());
-        return userRepository.save(user);
+        return null;
     }
 
-    // Remover usuário
+    // Delete user
     public boolean deleteUser(Long id) {
-        if (!userRepository.existsById(id)) return false;
-        userRepository.deleteById(id);
-        return true;
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
-
 }

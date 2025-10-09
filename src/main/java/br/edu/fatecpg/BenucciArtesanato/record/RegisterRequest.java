@@ -6,7 +6,6 @@ public record RegisterRequest(
         String password,
         String phoneNumber,
         String address,
-
-        String cpf
-
+        String cpf,
+        String type // Changed from 'role' to 'type' to match frontend's RegisterRequest
 ) {}

@@ -1,4 +1,3 @@
-
 package br.edu.fatecpg.BenucciArtesanato.controller;
 
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
@@ -29,15 +28,21 @@ public class AuthControllerTest {
 
     @Test
     public void testRegister() {
-        RegisterRequest request = new RegisterRequest("Joao", "joao@email.com", "1234", "13988240253", "Av. São Paulo");
-        when(authService.register(request)).thenReturn(null); // apenas para teste, podemos retornar null ou um usuario mockado
+        RegisterRequest request = new RegisterRequest(
+                "Joao",
+                "joao@email.com",
+                "1234",
+                "13988240253",
+                "Av. São Paulo",
+                "cliente",      // ← tipo de usuário (cliente ou admin)
+                "12345678900"   // ← CPF
+        );
+
+        when(authService.register(request)).thenReturn(null);
 
         ResponseEntity<?> response = authController.register(request);
 
-        // Verifica se o status retornado é 201 CREATED
         assertEquals(201, response.getStatusCodeValue());
-
-        // Verifica se o método register do service foi chamado exatamente uma vez
         verify(authService, times(1)).register(request);
     }
 

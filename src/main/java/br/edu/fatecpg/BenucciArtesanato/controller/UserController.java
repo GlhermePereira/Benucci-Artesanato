@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -14,55 +16,38 @@ public class UserController {
 
     private final UserService userService;
 
-    // GET /users/{id} → retorna dados do usuário como DTO
+    @GetMapping
+    public ResponseEntity<List<User>> getAll() {
+        return ResponseEntity.ok(userService.getAll());
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+    public ResponseEntity<User> getById(@PathVariable Long id) {
         User user = userService.getById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Converte User para UserDTO
-        UserDTO dto = new UserDTO();
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setPassword(user.getPassword());
-        dto.setPhoneNumber(user.getPhoneNumber());
-        dto.setAddress(user.getAddress());
-        dto.setType(user.getType());
-        dto.setCpf(user.getCpf());
-
-        return ResponseEntity.ok(dto);
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 
-    // PUT /users/{id} → atualiza dados do usuário
+    @GetMapping("/email/{email}")
+    public ResponseEntity<User> getByEmail(@PathVariable String email) {
+        User user = userService.searchByEmail(email);
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<User> registerUser(@RequestBody UserDTO dto) {
+        User created = userService.registerUser(dto);
+        return ResponseEntity.ok(created);
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        User updatedUser = userService.updateUser(id, userDTO);
-        if (updatedUser == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Converte atualizado para DTO
-        UserDTO dto = new UserDTO();
-        dto.setName(updatedUser.getName());
-        dto.setEmail(updatedUser.getEmail());
-        dto.setPassword(updatedUser.getPassword());
-        dto.setPhoneNumber(updatedUser.getPhoneNumber());
-        dto.setAddress(updatedUser.getAddress());
-        dto.setType(updatedUser.getType());
-        dto.setCpf(updatedUser.getCpf());
-
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UserDTO dto) {
+        User updated = userService.updateUser(id, dto);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
-    // DELETE /users/{id} → remove usuário
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
-        boolean removed = userService.deleteUser(id);
-        if (!removed) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok("Usuário removido com sucesso!");
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        boolean deleted = userService.deleteUser(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }

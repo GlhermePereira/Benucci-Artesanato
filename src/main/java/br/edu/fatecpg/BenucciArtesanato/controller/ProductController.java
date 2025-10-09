@@ -5,6 +5,7 @@ import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,27 +14,29 @@ import java.util.List;
 @RequestMapping("/products")
 public class ProductController {
 
-    private final ProductService productService;
-
     @Autowired
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
+    private ProductService productService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getProduct(@PathVariable Long id) {
-        ProductDTO dto = productService.getProductDTOById(id);
-        return ResponseEntity.ok(dto);
-    }
-
-
+    // ✅ LISTAR todos os produtos (público)
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
         List<ProductDTO> products = productService.getAllDTO();
         return ResponseEntity.ok(products);
     }
 
+    // ✅ VER um produto específico (público)
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDTO> getProduct(@PathVariable Long id) {
+        try {
+            ProductDTO dto = productService.getProductDTOById(id);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
+    // 🔒 CRIAR produto (somente ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<String> createProduct(@RequestBody ProductDTO productDTO) {
         try {
@@ -44,15 +47,20 @@ public class ProductController {
         }
     }
 
+    // 🔒 ATUALIZAR produto (somente ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
-        Product updated = productService.updateProduct(id, productDTO);
-        if (updated == null) {
+        try {
+            Product updated = productService.updateProduct(id, productDTO);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(updated);
     }
 
+    // 🔒 EXCLUIR produto (somente ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         boolean removed = productService.deleteProduct(id);

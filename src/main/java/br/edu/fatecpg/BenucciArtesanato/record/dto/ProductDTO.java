@@ -19,4 +19,16 @@ public class ProductDTO {
     private String imageUrl;
     private BigDecimal price;
     private Integer stock;
+
+    // Adicionar objeto category completo
+    private CategoryDTO category;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CategoryDTO {
+        private Long id;
+        private String name;
+    }
 }

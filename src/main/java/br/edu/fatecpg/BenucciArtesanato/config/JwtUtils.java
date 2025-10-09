@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtils {
@@ -19,32 +20,32 @@ public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${jwt.secret}")
-    private String jwtSecret; // chave base64 ou longa o suficiente (>= 64 bytes)
+    private String jwtSecret;
 
     @Value("${jwt.expirationMs}")
     private int jwtExpirationMs;
 
-    // Cria a chave de assinatura a partir do jwtSecret
-// Cria a chave de assinatura a partir do jwtSecret (Base64)
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-
-    //
     public String generateToken(User user) {
+        // Extrai o type sem o prefixo ROLE_
+        String type = user.getRole() != null ? user.getRole().replace("ROLE_", "") : "USER";
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("id", user.getId())
                 .claim("name", user.getName())
-                .claim("type", user.getType())
+                .claim("role", user.getRole())  // mantém role para Spring Security (string)
+                .claim("roles", List.of(user.getRole())) // compatibilidade com filter (lista)
+                .claim("type", type)            // adiciona type para frontend
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    // Obtém o email do token
     public String getEmailFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -54,7 +55,6 @@ public class JwtUtils {
                 .getSubject();
     }
 
-    // Valida o token JWT sem verificar usuário
     public boolean IsValidateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
@@ -71,12 +71,8 @@ public class JwtUtils {
         return false;
     }
 
-    // Valida o token e se pertence ao usuário
     public boolean IsValidateToken(String token, User user) {
         String emailToken = getEmailFromToken(token);
-        // Chama o validateToken sem usuário para checar validade do token
         return emailToken.equals(user.getEmail()) && IsValidateToken(token);
     }
-
-
 }

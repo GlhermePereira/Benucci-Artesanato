@@ -54,11 +54,17 @@ class AuthServiceTest {
                 .password("hashedSenha")
                 .phoneNumber("13988240253")
                 .address("Av. São Paulo, 416")
-                .type("cliente")
+                .role("cliente")
                 .build();
 
-        registerRequest = new RegisterRequest(
-                "Joao", "joao@email.com", "senha123", "13988240253", "Av. São Paulo, 416"
+        RegisterRequest request = new RegisterRequest(
+                "Joao",
+                "joao@email.com",
+                "1234",
+                "13988240253",      // ← phoneNumber (4º parâmetro)
+                "Av. São Paulo",    // ← address (5º parâmetro)
+                "12345678900",      // ← CPF (6º parâmetro)
+                "cliente"           // ← type (7º parâmetro)
         );
 
         loginRequest = new LoginRequest("joao@email.com", "senha123");

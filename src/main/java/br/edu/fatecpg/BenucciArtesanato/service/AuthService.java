@@ -34,6 +34,11 @@ public class AuthService {
 
 
     public User register(RegisterRequest request) {
+        String role = "ROLE_USER"; // Default role
+        if (request.type() != null && request.type().equalsIgnoreCase("admin")) {
+            role = "ROLE_ADMIN";
+        }
+
         User user = User.builder()
                 .name(request.name())
                 .email(request.email())
@@ -41,9 +46,14 @@ public class AuthService {
                 .phoneNumber(request.phoneNumber())
                 .address(request.address())
                 .cpf(request.cpf())
-                .type("customer")
+                .role(role)
                 .build();
         return repository.save(user);
+    }
+
+    public User getUserByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 
     public String authenticateUser(LoginRequest request) {
@@ -73,7 +83,7 @@ public class AuthService {
                                         .name("Admin")
                                         .email("admin@email.com")
                                         .password(encoder.encode("admin123"))
-                                        .type("admin")
+                                        .role("ROLE_ADMIN") // Changed to ROLE_ADMIN
                                         .phoneNumber("1398812029")
                                         .address("Av. Pres. Kennedy, 1405 - Guilhermina, Praia Grande - SP, 11702-205")
                                         .build();

@@ -19,7 +19,7 @@ class JwtUtilsTest {
         usuario.setId(1L);
         usuario.setName("Teste User");
         usuario.setEmail("teste@email.com");
-        usuario.setType("ADMIN");
+        usuario.setRole("ADMIN");
     }
 
     @Test
