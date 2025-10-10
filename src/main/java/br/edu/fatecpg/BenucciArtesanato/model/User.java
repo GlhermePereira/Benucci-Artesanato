@@ -1,5 +1,6 @@
 package br.edu.fatecpg.BenucciArtesanato.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,8 +34,8 @@ public class User {
     /**
      * 👇 Esse campo define o papel do usuário no Spring Security.
      * Valores esperados:
-     *  - "ROLE_USER"
-     *  - "ROLE_ADMIN"
+     * - "ROLE_USER"
+     * - "ROLE_ADMIN"
      */
     @Column(nullable = false)
     private String role;
@@ -66,10 +67,12 @@ public class User {
     }
 
     @ToString.Exclude
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
     @ToString.Exclude
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
 }
