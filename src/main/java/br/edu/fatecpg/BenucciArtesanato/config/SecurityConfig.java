@@ -85,10 +85,28 @@ public class SecurityConfig {
                 "http://192.168.1.198:3000",
                 "http://localhost:8081",
                 "http://192.168.1.198:8081",
+<<<<<<< HEAD
                 "exp://192.168.1.198:8081"
+=======
+                "http://192.168.15.34:8080",
+                "https://e4922bed57f3.ngrok-free.app",
+                "http://192.168.15.34:8080",
+                "http://localhost:8081", // React Native rodando local
+                "exp://192.168.15.34:8081" // Expo Go (se usar em celular)
+
+>>>>>>> 5837998 (atualizando banco)
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+<<<<<<< HEAD
         configuration.setAllowedHeaders(Arrays.asList("*"));
+=======
+
+        // Headers permitidos
+       // configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+
+        // Permite credenciais
+>>>>>>> 5837998 (atualizando banco)
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
