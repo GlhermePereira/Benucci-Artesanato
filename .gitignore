@@ -14,7 +14,7 @@
 .DS_Store
 
 # Chaves e secrets
-application.properties
+#application.properties
 application.yml
 .env
 
