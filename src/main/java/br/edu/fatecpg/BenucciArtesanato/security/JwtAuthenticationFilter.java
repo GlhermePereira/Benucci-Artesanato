@@ -78,11 +78,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
         // 4. Converter roles para authorities do Spring Security
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-            .map(SimpleGrantedAuthority::new)
-            .collect(Collectors.toList());
+            List<SimpleGrantedAuthority> authorities = roles.stream()
+                    .map(role -> new SimpleGrantedAuthority(
+                            role.startsWith("ROLE_") ? role : "ROLE_" + role
+                    ))
+                    .collect(Collectors.toList());
 
-        // 5. Criar autenticação e setar no contexto
+
+            // 5. Criar autenticação e setar no contexto
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(email, null, authorities);
 

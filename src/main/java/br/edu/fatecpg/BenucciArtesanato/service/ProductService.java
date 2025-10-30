@@ -50,6 +50,7 @@ public class ProductService {
         product.setStock(dto.getStock());
         product.setImageUrl(dto.getImageUrl());
         product.setCategory(category);
+        System.out.println("receba");
 
         return productRepository.save(product);
     }
