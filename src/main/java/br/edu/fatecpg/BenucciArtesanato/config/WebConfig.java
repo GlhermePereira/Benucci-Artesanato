@@ -16,8 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://192.168.1.198:3000", // Se o frontend estiver neste IP
                         "http://localhost:8081",     // Expo/React Native
                         "http://192.168.1.198:8081",  // Expo/React Native no IP local
-                        "http://localhost:8081/swagger-ui/index.html",
-                        "http://localhost:8081/swagger-ui.html"
+                        "https://benucci-artesanato.onrender.com", // 🌍 domínio do backend no Render
+                        "https://benucci-artesanato.onrender.com/swagger-ui.html"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")

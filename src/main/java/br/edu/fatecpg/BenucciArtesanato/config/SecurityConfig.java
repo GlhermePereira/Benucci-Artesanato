@@ -98,7 +98,9 @@ public class SecurityConfig {
                 "https://e4922bed57f3.ngrok-free.app",
                 "http://192.168.15.34:8080",
                 "http://localhost:8081", // React Native rodando local
-                "exp://192.168.15.34:8081" // Expo Go (se usar em celular)
+                "exp://192.168.15.34:8081", // Expo Go (se usar em celular)
+                "https://benucci-artesanato.onrender.com", // 🌍 domínio do backend no Render
+                "https://benucci-artesanato.onrender.com/swagger-ui.html"
 
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
