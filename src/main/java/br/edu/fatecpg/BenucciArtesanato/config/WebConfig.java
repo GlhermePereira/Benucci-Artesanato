@@ -15,7 +15,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:3000",    // React dev server alternativo
                         "http://192.168.1.198:3000", // Se o frontend estiver neste IP
                         "http://localhost:8081",     // Expo/React Native
-                        "http://192.168.1.198:8081"  // Expo/React Native no IP local
+                        "http://192.168.1.198:8081",  // Expo/React Native no IP local
+                        "http://localhost:8081/swagger-ui/index.html",
+                        "http://localhost:8081/swagger-ui.html"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
