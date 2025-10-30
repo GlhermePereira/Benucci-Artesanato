@@ -14,9 +14,9 @@
 .DS_Store
 
 # Chaves e secrets
-#application.properties
-application.yml
-.env
+application-prod.properties
+application.properties-prod
+
 
 # Dependências
 /.mvn/
