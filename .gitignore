@@ -16,7 +16,7 @@
 # Chaves e secrets
 application-prod.properties
 application.properties-prod
-
+.env
 
 # Dependências
 /.mvn/
