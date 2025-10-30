@@ -16,7 +16,7 @@ public class SwaggerConfig {
 
         Info apiInfo = new Info()
                 .title("API E-commerce")
-                .version("1.0.0")
+                .version("3.1.0")
                 .description("API E-commerce com Swagger via ngrok");
 
 
