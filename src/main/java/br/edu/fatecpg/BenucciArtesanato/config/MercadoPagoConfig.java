@@ -14,11 +14,19 @@ public class MercadoPagoConfig {
     @Value("${mercadopago.access-token}")
     private String accessToken;
 
+    @Value("${mercadopago.integrator-id:}")
+    private String integratorId;
+
     @Bean
     public WebClient mercadoPagoWebClient() {
-        return WebClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeader("Authorization", "Bearer " + accessToken)
-                .build();
+    WebClient.Builder builder = WebClient.builder()
+        .baseUrl(baseUrl)
+        .defaultHeader("Authorization", "Bearer " + accessToken);
+
+    if (integratorId != null && !integratorId.isBlank()) {
+        builder.defaultHeader("X-Integrator-Id", integratorId);
+    }
+
+    return builder.build();
     }
 }

@@ -10,6 +10,9 @@ import br.edu.fatecpg.BenucciArtesanato.record.dto.UserDTO;
 
 import java.util.Optional;
 import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 public class UserService {
@@ -79,6 +82,27 @@ public class UserService {
 
     // Update user
     public User updateUser(Long id, UserDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Usuário não autenticado.");
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        if (!isAdmin) {
+            if (dto.getType() != null && !dto.getType().isBlank()) {
+                throw new AccessDeniedException("Você não pode alterar o tipo de usuário.");
+            }
+
+            String requesterEmail = authentication.getName();
+            Optional<User> requesterOpt = userRepository.findByEmail(requesterEmail);
+
+            if (requesterOpt.isEmpty() || !requesterOpt.get().getId().equals(id)) {
+                throw new AccessDeniedException("Você não tem permissão para atualizar este usuário.");
+            }
+        }
+
         Optional<User> userOpt = userRepository.findById(id);
 
         if (userOpt.isPresent()) {

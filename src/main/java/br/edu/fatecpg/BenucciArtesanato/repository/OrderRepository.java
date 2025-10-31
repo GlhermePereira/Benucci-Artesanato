@@ -24,4 +24,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.user.id = :userId " +
             "ORDER BY o.createdAt DESC")
     List<Order> findByUserIdWithItems(@Param("userId") Long userId);
+
+        // Buscar por mpPreferenceId (usado para lookup via Mercado Pago)
+        Optional<Order> findByMpPreferenceId(String mpPreferenceId);
 }

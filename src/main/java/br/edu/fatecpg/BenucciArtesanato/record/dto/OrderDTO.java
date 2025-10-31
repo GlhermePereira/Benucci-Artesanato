@@ -15,5 +15,9 @@ public class OrderDTO {
     private String deliveryType;
     private String deliveryAddress;
     private String status;
+    private String paymentStatus;
+    private String paymentMethod;
+    private String mpPreferenceId;
+    private String mpPaymentId;
     private List<OrderItemDTO> items;
 }

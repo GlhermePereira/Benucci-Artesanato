@@ -2,6 +2,7 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.model.Order;
 import br.edu.fatecpg.BenucciArtesanato.model.OrderItem;
+import br.edu.fatecpg.BenucciArtesanato.model.Payment;
 import br.edu.fatecpg.BenucciArtesanato.model.Product;
 import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderDTO;
@@ -16,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -65,24 +68,40 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    // Expor método para buscar a entidade Order (para uso interno / webhooks)
+    public Order findOrderEntityById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+    }
+
+    // Buscar por mpPreferenceId
+    public Optional<Order> findByMpPreferenceId(String mpPreferenceId) {
+        return orderRepository.findByMpPreferenceId(mpPreferenceId);
+    }
+
     @Transactional(readOnly = true)
     public OrderDTO getOrderDetails(Long id) {
         Order order = orderRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+        Payment payment = order.getPayment();
 
         return OrderDTO.builder()
                 .id(order.getId())
                 .orderDate(order.getCreatedAt())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name()) // retorna como String
-                .items(order.getItems().stream().map(item ->
-                        OrderItemDTO.builder()
+                .paymentStatus(payment != null ? payment.getStatus() : null)
+                .paymentMethod(payment != null ? payment.getPaymentMethod() : null)
+                .mpPreferenceId(payment != null ? payment.getMpPreferenceId() : order.getMpPreferenceId())
+                .mpPaymentId(payment != null ? payment.getMpPaymentId() : null)
+                .items(order.getItems().stream()
+                        .map(item -> OrderItemDTO.builder()
                                 .productId(item.getProduct().getId())
                                 .productName(item.getProductName())
                                 .quantity(item.getQuantity())
                                 .unitPrice(item.getUnitPrice())
-                                .build()
-                ).collect(Collectors.toList()))
+                                .build())
+                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -90,24 +109,32 @@ public class OrderService {
     public List<OrderDTO> getUserOrders(Long userId) {
         List<Order> orders = orderRepository.findByUserIdWithItems(userId);
 
-        return orders.stream().map(order ->
-                OrderDTO.builder()
-                        .id(order.getId())
-                        .orderDate(order.getCreatedAt())
-                        .totalAmount(order.getTotalAmount())
-                        .status(order.getStatus().name())
-                        .deliveryType(order.getDeliveryType())
-                        .deliveryAddress(order.getDeliveryAddress())
-                        .items(order.getItems().stream().map(item ->
-                                OrderItemDTO.builder()
-                                        .productId(item.getProduct().getId())
-                                        .productName(item.getProductName())
-                                        .quantity(item.getQuantity())
-                                        .unitPrice(item.getUnitPrice())
-                                        .build()
-                        ).toList())
-                        .build()
-        ).toList();
+        return orders.stream()
+                .map(order -> {
+                    Payment payment = order.getPayment();
+
+                    return OrderDTO.builder()
+                            .id(order.getId())
+                            .orderDate(order.getCreatedAt())
+                            .totalAmount(order.getTotalAmount())
+                            .status(order.getStatus().name())
+                            .paymentStatus(payment != null ? payment.getStatus() : null)
+                            .paymentMethod(payment != null ? payment.getPaymentMethod() : null)
+                            .mpPreferenceId(payment != null ? payment.getMpPreferenceId() : order.getMpPreferenceId())
+                            .mpPaymentId(payment != null ? payment.getMpPaymentId() : null)
+                            .deliveryType(order.getDeliveryType())
+                            .deliveryAddress(order.getDeliveryAddress())
+                            .items(order.getItems().stream()
+                                    .map(item -> OrderItemDTO.builder()
+                                            .productId(item.getProduct().getId())
+                                            .productName(item.getProductName())
+                                            .quantity(item.getQuantity())
+                                            .unitPrice(item.getUnitPrice())
+                                            .build())
+                                    .collect(Collectors.toList()))
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     public OrderDTO updateOrderStatus(Long orderId, String statusStr) {

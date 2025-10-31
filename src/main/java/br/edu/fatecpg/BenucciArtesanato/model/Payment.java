@@ -29,6 +29,9 @@ public class Payment {
     @Column(name = "mp_preference_id")
     private String mpPreferenceId;
 
+    @Column(name = "mp_payment_id")
+    private String mpPaymentId;
+
     @Column(name = "sandbox_link")
     private String sandboxLink; // URL sandbox do Mercado Pago
 
