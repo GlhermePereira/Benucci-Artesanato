@@ -6,6 +6,10 @@ import br.edu.fatecpg.BenucciArtesanato.record.AuthResponse;
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
 import br.edu.fatecpg.BenucciArtesanato.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +26,7 @@ public class AuthController {
         this.jwtUtils = jwtUtils;
         this.authService = authService;
     }
-
+    @Operation(summary = "Registrar usuário")
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         System.out.println("📝 AuthController: Tentativa de registro para: " + request.email());
@@ -37,7 +41,10 @@ public class AuthController {
         AuthResponse response = new AuthResponse(token, user);
         return ResponseEntity.ok(response);
     }
-
+    @Operation(summary = "Login de usuário")
+    @ApiResponse(responseCode = "200", description = "Retorna token e usuário",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = AuthResponse.class)))
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         System.out.println("🔐 AuthController: Tentativa de login para: " + request.email());

@@ -34,7 +34,8 @@ public class User {
 
     @Column(nullable = false)
     private String role;
-
+    @Column(nullable = false)
+    private String type;
 
     @JsonProperty("type")
     public String getType() {
