@@ -68,31 +68,6 @@ public class AuthService {
     }
 
 
-    @Bean
-    CommandLineRunner init(UserRepository repository, PasswordEncoder encoder) {
-        return args -> {
-            repository.findByEmail("admin@email.com")
-                    .ifPresentOrElse(
-                            usuario -> {
-                                // garante que a password está correta
-                                usuario.setPassword(encoder.encode("admin123"));
-                                repository.save(usuario);
-                            },
-                            () -> {
-                                User admin = User.builder()
-                                        .name("Admin")
-                                        .email("admin@email.com")
-                                        .password(encoder.encode("admin123"))
-                                        .role("ROLE_ADMIN") // Changed to ROLE_ADMIN
-                                        .phoneNumber("1398812029")
-                                        .address("Av. Pres. Kennedy, 1405 - Guilhermina, Praia Grande - SP, 11702-205")
-                                        .build();
-                                repository.save(admin);
-                            }
-                    );
-        };
-    }
-
 
 
 

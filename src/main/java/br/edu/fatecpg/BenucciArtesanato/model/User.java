@@ -31,30 +31,18 @@ public class User {
     private String phoneNumber;
     private String address;
 
-    /**
-     * 👇 Esse campo define o papel do usuário no Spring Security.
-     * Valores esperados:
-     * - "ROLE_USER"
-     * - "ROLE_ADMIN"
-     */
+
     @Column(nullable = false)
     private String role;
 
-    /**
-     * 👇 Campo virtual para compatibilidade com frontend
-     * Retorna o role sem o prefixo "ROLE_"
-     * Este campo é serializado como "type" no JSON
-     */
+
     @JsonProperty("type")
     public String getType() {
         if (role == null) return "USER";
         return role.replace("ROLE_", "");
     }
 
-    /**
-     * 👇 Setter para type (para compatibilidade bidirecional)
-     * Converte type em role com prefixo ROLE_
-     */
+
     @JsonProperty("type")
     public void setType(String type) {
         if (type == null) {
