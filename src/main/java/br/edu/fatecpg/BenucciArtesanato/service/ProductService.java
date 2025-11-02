@@ -6,9 +6,16 @@ import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.CategoryRepository;
 import br.edu.fatecpg.BenucciArtesanato.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,7 +24,8 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
-
+    @Autowired
+    private SupabaseService supabaseService;
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -35,12 +43,28 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
         return convertToDTO(product);
     }
-
     @Transactional
-    public Product createProduct(ProductDTO dto) {
+    public Product createProduct(ProductDTO dto, MultipartFile file) throws IOException {
         // Buscar categoria
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + dto.getCategoryId()));
+
+        // Redimensionar imagem
+        BufferedImage original = ImageIO.read(file.getInputStream());
+        int newWidth = 800;
+        int newHeight = 600;
+        BufferedImage resized = new BufferedImage(newWidth, newHeight, original.getType());
+        Graphics2D g = resized.createGraphics();
+        g.drawImage(original, 0, 0, newWidth, newHeight, null);
+        g.dispose();
+
+        // Converter imagem para bytes
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(resized, "jpg", os);
+        byte[] imageBytes = os.toByteArray();
+
+        // Enviar para Supabase e pegar a URL
+        String imageUrl = supabaseService.uploadImage(file.getOriginalFilename(), imageBytes);
 
         // Criar produto
         Product product = new Product();
@@ -48,9 +72,8 @@ public class ProductService {
         product.setDescription(dto.getDescription());
         product.setPrice(dto.getPrice());
         product.setStock(dto.getStock());
-        product.setImageUrl(dto.getImageUrl());
+        product.setImageUrl(imageUrl); // só salvar a URL no banco
         product.setCategory(category);
-        System.out.println("receba");
 
         return productRepository.save(product);
     }

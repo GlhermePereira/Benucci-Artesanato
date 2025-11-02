@@ -17,7 +17,7 @@
 application-prod.properties
 application.properties-prod
 .env
-
+ex.java
 # Dependências
 /.mvn/
 .gradle/
