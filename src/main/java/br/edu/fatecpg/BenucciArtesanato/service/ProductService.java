@@ -6,11 +6,10 @@ import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.CategoryRepository;
 import br.edu.fatecpg.BenucciArtesanato.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
+import net.coobird.thumbnailator.Thumbnails;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -37,46 +36,89 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+
     @Transactional(readOnly = true)
     public ProductDTO getProductDTOById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
         return convertToDTO(product);
     }
-    @Transactional
-    public Product createProduct(ProductDTO dto, MultipartFile file) throws IOException {
-        // Buscar categoria
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + dto.getCategoryId()));
+    public Product createProduct(ProductDTO productDTO, MultipartFile image) {
+        try {
+            validateFile(image);
 
-        // Redimensionar imagem
-        BufferedImage original = ImageIO.read(file.getInputStream());
-        int newWidth = 800;
-        int newHeight = 600;
-        BufferedImage resized = new BufferedImage(newWidth, newHeight, original.getType());
-        Graphics2D g = resized.createGraphics();
-        g.drawImage(original, 0, 0, newWidth, newHeight, null);
-        g.dispose();
+            byte[] processedImage = resizeImage(image);
+            String imageUrl = supabaseService.uploadImage(image.getOriginalFilename(), processedImage);
+            productDTO.setImageUrl(imageUrl);
 
-        // Converter imagem para bytes
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(resized, "jpg", os);
-        byte[] imageBytes = os.toByteArray();
+            Product product = new Product();
+            product.setName(productDTO.getName());
+            product.setDescription(productDTO.getDescription());
+            product.setPrice(productDTO.getPrice());
+            product.setStock(productDTO.getStock());
+            product.setImageUrl(productDTO.getImageUrl());
+            // set category, etc
 
-        // Enviar para Supabase e pegar a URL
-        String imageUrl = supabaseService.uploadImage(file.getOriginalFilename(), imageBytes);
+            return productRepository.save(product);
 
-        // Criar produto
-        Product product = new Product();
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setStock(dto.getStock());
-        product.setImageUrl(imageUrl); // só salvar a URL no banco
-        product.setCategory(category);
-
-        return productRepository.save(product);
+        } catch (IllegalArgumentException e) {
+            // dispara pro Controller tratar como 400 Bad Request
+            throw e;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao processar a imagem", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro interno ao criar produto", e);
+        }
     }
+
+    private void validateFile(MultipartFile file) {
+        List<String> allowedTypes = List.of(
+                "image/png",
+                "image/jpeg",
+                "image/jpg",
+                "image/webp",
+                "application/pdf"
+        );
+
+        String contentType = file.getContentType();
+        if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("Formato de arquivo não permitido: " + contentType);
+        }
+
+        long maxSize = 5 * 1024 * 1024; // 5 MB
+        if (file.getSize() > maxSize) {
+            throw new IllegalArgumentException("Arquivo muito grande. Máximo permitido: 5MB");
+        }
+    }
+
+
+    private byte[] resizeImage(MultipartFile file) throws IOException {
+        String contentType = file.getContentType();
+
+        // Apenas imagens suportadas pelo Thumbnailator
+        if (contentType != null &&
+                (contentType.equals("image/jpeg") ||
+                        contentType.equals("image/png") ||
+                        contentType.equals("image/bmp") ||
+                        contentType.equals("image/gif"))) {
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Thumbnails.of(file.getInputStream())
+                    .size(800, 800)
+                    .outputQuality(0.8)
+                    .toOutputStream(outputStream);
+            return outputStream.toByteArray();
+        }
+        // WebP, PDF ou outros formatos -> não redimensiona
+        else if (contentType != null && contentType.startsWith("image/")) {
+            // Você pode aceitar WebP sem redimensionar
+            return file.getBytes();
+        }
+
+        throw new IllegalArgumentException("Formato de arquivo não suportado. Apenas imagens válidas são permitidas.");
+    }
+
+
 
     @Transactional
     public Product updateProduct(Long id, ProductDTO dto) {
