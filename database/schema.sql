@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS order_item CASCADE;
 DROP TABLE IF EXISTS "order" CASCADE;
 DROP TABLE IF EXISTS product CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
+DROP TABLE IF EXISTS subcategory CASCADE;
 DROP TABLE IF EXISTS "user" CASCADE;
 
 -- ========================================
@@ -28,15 +29,39 @@ CREATE TABLE "user" (
 
 CREATE UNIQUE INDEX idx_user_email ON "user"(email);
 
+
 -- ========================================
--- Category
+-- CATEGORY
 -- ========================================
 CREATE TABLE category (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT
+    name VARCHAR(120) NOT NULL UNIQUE,
+    slug VARCHAR(160) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+CREATE INDEX idx_category_slug ON category(slug);
+
+
+-- ========================================
+-- SUBCATEGORY
+-- ========================================
+CREATE TABLE subcategory (
+    id SERIAL PRIMARY KEY,
+    category_id INT NOT NULL REFERENCES category(id) ON DELETE CASCADE,
+    name VARCHAR(120) NOT NULL,
+    slug VARCHAR(160) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_subcategory_unique
+    ON subcategory(category_id, slug);
+
+CREATE INDEX idx_subcategory_category ON subcategory(category_id);
 
 -- ========================================
 -- Product

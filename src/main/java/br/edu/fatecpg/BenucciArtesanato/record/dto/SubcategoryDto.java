@@ -6,19 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CategoryDto {
+public class SubcategoryDto {
     private Long id;
+    private Long categoryId;
     private String name;
     private String slug;
     private String description;
-
-    // lista de subcategorias pertencentes à categoria
-    private List<SubcategoryDto> subcategories;
 }

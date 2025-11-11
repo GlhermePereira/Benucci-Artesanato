@@ -1,0 +1,91 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Decoração",
+      "subcategories": [
+        {
+          "id": 2,
+          "name": "Quadros e Pinturas",
+          "subcategories": [
+            {
+              "id": 3,
+              "name": "Mandalas"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Velas Artesanais"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Acessórios e Moda",
+      "subcategories": [
+        {
+          "id": 6,
+          "name": "Colares Artesanais"
+        },
+        {
+          "id": 7,
+          "name": "Bolsas e Acessórios"
+        }
+      ]
+    }
+  ],
+  "products": [
+    {"id":1,"name":"Colar de Sementes Coloridas","description":"Colar artesanal feito com sementes naturais tingidas à mão, inspirado em tradições indígenas. Comprimento aproximado 45cm.","price":49.90,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=1","stock":15},
+    {"id":2,"name":"Colar de Pedras Semipreciosas","description":"Colar feito com pedras semipreciosas cuidadosamente selecionadas, cada peça única e com design exclusivo.","price":79.90,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=2","stock":10},
+    {"id":3,"name":"Colar de Madeira Natural","description":"Colar feito com madeira natural polida, design minimalista e artesanal. Perfeito para complementar qualquer look.","price":55.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=3","stock":12},
+    {"id":4,"name":"Colar de Miçangas Coloridas","description":"Colar artesanal com miçangas coloridas e fios de algodão. Leve e elegante para o dia a dia.","price":45.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=4","stock":20},
+    {"id":5,"name":"Colar de Cristal Curativo","description":"Colar feito com cristais naturais, pensado para equilíbrio energético e beleza artesanal.","price":65.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=5","stock":8},
+    {"id":6,"name":"Bolsa de Crochê Artesanal","description":"Bolsa feita à mão em crochê com fios de algodão de alta qualidade. Perfeita para o dia a dia ou eventos especiais.","price":120.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=6","stock":8},
+    {"id":7,"name":"Bolsa de Bordado Tradicional","description":"Bolsa artesanal com bordados feitos à mão, inspirados em técnicas tradicionais. Cada peça é única.","price":150.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=7","stock":5},
+    {"id":8,"name":"Carteira Artesanal de Couro","description":"Carteira feita à mão com couro legítimo, costura artesanal e acabamento elegante.","price":85.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=8","stock":10},
+    {"id":9,"name":"Bolsa de Tricô Colorida","description":"Bolsa feita à mão em tricô com fios coloridos, perfeita para um visual alegre e artesanal.","price":110.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=9","stock":12},
+    {"id":10,"name":"Vela de Lavanda Artesanal","description":"Vela feita com cera natural e óleo essencial de lavanda. Ideal para relaxamento e decoração de ambientes.","price":35.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=10","stock":20},
+    {"id":11,"name":"Vela Aromática de Baunilha","description":"Vela artesanal com aroma de baunilha, feita com cera vegetal. Perfeita para criar uma atmosfera aconchegante.","price":38.50,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=11","stock":12},
+    {"id":12,"name":"Vela de Canela e Laranja","description":"Vela artesanal com aroma de canela e laranja, feita com cera natural. Para momentos de relaxamento e aromaterapia.","price":40.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=12","stock":15},
+    {"id":13,"name":"Vela Decorativa Pequena","description":"Vela pequena decorativa, perfeita para presentear ou enfeitar pequenos ambientes.","price":30.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=13","stock":25},
+    {"id":14,"name":"Vela de Ervas Naturais","description":"Vela artesanal feita com cera vegetal e ervas naturais, ideal para meditação e relaxamento.","price":42.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=14","stock":18},
+    {"id":15,"name":"Quadro Mandala Colorida","description":"Mandala pintada à mão com aquarela sobre tela. Ideal para decoração de interiores e presentes especiais.","price":250.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=15","stock":7},
+    {"id":16,"name":"Quadro Mandala Azul","description":"Mandala artesanal pintada à mão, cores predominantes em azul. Cada peça é única.","price":240.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=16","stock":5},
+    {"id":17,"name":"Mandala Decorativa Pequena","description":"Mandala artesanal pequena, ideal para decorar mesas, estantes ou como presente artesanal único.","price":75.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=17","stock":10},
+    {"id":18,"name":"Mandala Decorativa Média","description":"Mandala pintada à mão, tamanho médio, para decoração de parede ou presente especial.","price":120.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=18","stock":8},
+    {"id":19,"name":"Mandala Decorativa Grande","description":"Mandala artesanal grande, ideal para decoração de parede de destaque. Cada peça única.","price":300.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=19","stock":4},
+    {"id":20,"name":"Quadro Aquarela Paisagem","description":"Quadro artesanal pintado em aquarela com temática de paisagem natural. Cada peça é única e exclusiva.","price":200.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=20","stock":5},
+    {"id":21,"name":"Quadro Acrílico Abstrato","description":"Quadro pintado com tinta acrílica em técnica abstrata, design moderno e artesanal.","price":220.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=21","stock":6},
+    {"id":22,"name":"Quadro Aquarela Floral","description":"Quadro artesanal com pintura em aquarela, tema floral, ideal para decoração de interiores.","price":180.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=22","stock":7},
+    {"id":23,"name":"Quadro Óleo Sobre Tela Montanhas","description":"Quadro pintado à mão em óleo sobre tela, representando montanhas e natureza.","price":260.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=23","stock":3},
+    {"id":24,"name":"Colar de Contas Naturais","description":"Colar feito com contas naturais e fio artesanal, leve e elegante para o dia a dia.","price":50.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=24","stock":14},
+    {"id":25,"name":"Colar com Pingente de Pedra","description":"Colar artesanal com pingente de pedra natural, design delicado e exclusivo.","price":70.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=25","stock":10},
+    {"id":26,"name":"Colar de Miçangas e Fios","description":"Colar artesanal colorido, mistura de miçangas e fios de algodão trançados.","price":55.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=26","stock":12},
+    {"id":27,"name":"Bolsa de Crochê Média","description":"Bolsa artesanal de crochê, tamanho médio, ideal para passeios e eventos casuais.","price":130.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=27","stock":7},
+    {"id":28,"name":"Bolsa de Bordado Floral","description":"Bolsa feita à mão com bordados florais, acabamento delicado e artesanal.","price":160.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=28","stock":6},
+    {"id":29,"name":"Bolsa de Tricô Pequena","description":"Bolsa de tricô artesanal pequena, leve e charmosa, perfeita para o dia a dia.","price":100.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=29","stock":10},
+    {"id":30,"name":"Bolsa de Algodão Bordada","description":"Bolsa feita em algodão bordado à mão, ideal para um look artesanal e colorido.","price":140.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=30","stock":8},
+    {"id":31,"name":"Vela Decorativa Grande","description":"Vela artesanal grande, ideal para decoração de mesas ou eventos. Aroma suave e natural.","price":50.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=31","stock":10},
+    {"id":32,"name":"Vela Aromática Floral","description":"Vela feita com cera natural e aroma floral, perfeita para relaxamento e decoração.","price":42.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=32","stock":12},
+    {"id":33,"name":"Vela Artesanal Mini","description":"Pequena vela artesanal, ideal para lembranças ou decoração discreta.","price":28.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=33","stock":20},
+    {"id":34,"name":"Vela de Ervas Relaxantes","description":"Vela artesanal feita com ervas naturais para meditação e momentos de relaxamento.","price":45.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=34","stock":15},
+    {"id":35,"name":"Mandala Azul Grande","description":"Mandala artesanal pintada à mão, cores predominantes azul, ideal para decoração de destaque.","price":320.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=35","stock":3},
+    {"id":36,"name":"Mandala Rosa Média","description":"Mandala pintada à mão em tons de rosa, tamanho médio, perfeita para parede ou presente.","price":140.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=36","stock":6},
+    {"id":37,"name":"Mandala Verde Pequena","description":"Mandala artesanal pequena, tons de verde, ideal para mesas ou estantes.","price":80.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=37","stock":10},
+    {"id":38,"name":"Quadro Abstrato Colorido","description":"Quadro artesanal em acrílico, design abstrato e vibrante, ideal para ambientes modernos.","price":230.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=38","stock":5},
+    {"id":39,"name":"Quadro Aquarela Marinha","description":"Quadro artesanal pintado em aquarela, temática marinha, cada peça única.","price":210.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=39","stock":6},
+    {"id":40,"name":"Quadro Acrílico Floral","description":"Quadro em acrílico com flores pintadas à mão, ideal para decoração delicada.","price":190.00,"categoryId":2,"imageUrl":"https://picsum.photos/200/200?random=40","stock":7},
+    {"id":41,"name":"Colar de Contas de Madeira","description":"Colar artesanal com contas de madeira natural, leve e elegante.","price":52.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=41","stock":14},
+    {"id":42,"name":"Colar de Pedra Natural","description":"Colar feito com pedra natural, design delicado, artesanal e único.","price":68.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=42","stock":12},
+    {"id":43,"name":"Colar Étnico Colorido","description":"Colar inspirado em tradições étnicas, artesanal, com cores vibrantes.","price":60.00,"categoryId":6,"imageUrl":"https://picsum.photos/200/200?random=43","stock":11},
+    {"id":44,"name":"Bolsa de Crochê Grande","description":"Bolsa grande feita em crochê artesanal, perfeita para passeios e eventos especiais.","price":150.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=44","stock":6},
+    {"id":45,"name":"Bolsa de Algodão Colorida","description":"Bolsa artesanal em algodão colorido, ideal para looks casuais e artesanais.","price":135.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=45","stock":8},
+    {"id":46,"name":"Bolsa Bordada Pequena","description":"Bolsa artesanal pequena, bordada à mão, perfeita para presentes e decoração de look.","price":120.00,"categoryId":7,"imageUrl":"https://picsum.photos/200/200?random=46","stock":10},
+    {"id":47,"name":"Vela Aromática de Lavanda Média","description":"Vela artesanal média, aroma de lavanda, perfeita para relaxamento e decoração.","price":40.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=47","stock":18},
+    {"id":48,"name":"Vela Decorativa de Baunilha","description":"Vela artesanal decorativa com aroma de baunilha, feita à mão.","price":42.00,"categoryId":4,"imageUrl":"https://picsum.photos/200/200?random=48","stock":15},
+    {"id":49,"name":"Mandala Decorativa Azul Pequena","description":"Mandala pequena pintada à mão, cores em azul, ideal para decoração de mesa ou estante.","price":78.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=49","stock":12},
+    {"id":50,"name":"Quadro Mandala Roxa","description":"Mandala artesanal pintada à mão em tons de roxo, tamanho médio, perfeita para parede ou presente.","price":160.00,"categoryId":3,"imageUrl":"https://picsum.photos/200/200?random=50","stock":7}
+  ]
+}
+

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,5 +31,7 @@ public class ProductDTO {
     public static class CategoryDTO {
         private Long id;
         private String name;
+        private List<CategoryDTO> subcategories;
     }
+
 }

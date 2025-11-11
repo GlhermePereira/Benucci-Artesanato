@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -66,15 +67,15 @@ public class ProductController {
     })
     public ResponseEntity<String> createProduct(
             @Parameter(description = "JSON do produto") @RequestPart("product") String productJson,
-            @Parameter(description = "Arquivo de imagem do produto") @RequestPart("image") MultipartFile image
+            @Parameter(description = "Arquivo de imagem do produto (opcional)")
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         try {
-            // converte o JSON (string) para o DTO
-            ObjectMapper mapper = new ObjectMapper();
-            ProductDTO productDTO = mapper.readValue(productJson, ProductDTO.class);
+            ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
 
             productService.createProduct(productDTO, image);
             return ResponseEntity.ok("Produto criado com sucesso!");
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -120,24 +121,27 @@ public class ProductController {
     // Mesmo método auxiliar usado no POST
     private ProductDTO mapToDTO(Product product) {
         ProductDTO.CategoryDTO categoryDTO = null;
+
         if (product.getCategory() != null) {
-            categoryDTO = new ProductDTO.CategoryDTO(
-                    product.getCategory().getId(),
-                    product.getCategory().getName()
-            );
+            categoryDTO = new ProductDTO.CategoryDTO();
+            categoryDTO.setId(product.getCategory().getId());
+            categoryDTO.setName(product.getCategory().getName());
+            categoryDTO.setSubcategories(Collections.emptyList()); // evita null
         }
 
-        return new ProductDTO(
-                product.getId(),
-                product.getCategory() != null ? product.getCategory().getId() : null,
-                product.getName(),
-                product.getDescription(),
-                product.getImageUrl(),
-                product.getPrice(),
-                product.getStock(),
-                categoryDTO
-        );
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
+        dto.setImageUrl(product.getImageUrl());
+        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+        dto.setCategory(categoryDTO);
+
+        return dto;
     }
+
 
 
     @Operation(summary = "Excluir produto", description = "Remove um produto pelo ID (somente ADMIN).")

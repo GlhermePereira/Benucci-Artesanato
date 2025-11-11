@@ -6,40 +6,38 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-@Entity
-@Table(name = "category")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Category {
+@Entity
+@Table(
+        name = "subcategory",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"category_id", "slug"})
+        }
+)
+public class SubCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 120, unique = true)
+    // Relacionamento: várias subcategorias para 1 categoria
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Column(nullable = false, length = 120)
     private String name;
 
-    @Column(nullable = false, length = 160, unique = true)
+    @Column(nullable = false, length = 160)
     private String slug;
 
     @Column(columnDefinition = "TEXT")
     private String description;
-
-    // Relacionamento com Subcategory
-    @OneToMany(
-            mappedBy = "category",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    @Builder.Default
-    private List<SubCategory> subcategories = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

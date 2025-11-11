@@ -45,24 +45,36 @@ public class ProductService {
     }
     public Product createProduct(ProductDTO productDTO, MultipartFile image) {
         try {
-            validateFile(image);
+            String finalImageUrl;
 
-            byte[] processedImage = resizeImage(image);
-            String imageUrl = supabaseService.uploadImage(image.getOriginalFilename(), processedImage);
-            productDTO.setImageUrl(imageUrl);
+            // ✅ Caso 1: imagem enviada via upload local
+            if (image != null && !image.isEmpty()) {
 
+                validateFile(image);
+
+                byte[] processedImage = resizeImage(image);
+                finalImageUrl = supabaseService.uploadImage(
+                        image.getOriginalFilename(),
+                        processedImage
+                );
+
+            } else {
+                // ✅ Caso 2: sem upload → usar imageUrl que veio no JSON
+                finalImageUrl = productDTO.getImageUrl();
+            }
+
+            // ✅ Criar produto
             Product product = new Product();
             product.setName(productDTO.getName());
             product.setDescription(productDTO.getDescription());
             product.setPrice(productDTO.getPrice());
             product.setStock(productDTO.getStock());
-            product.setImageUrl(productDTO.getImageUrl());
-            // set category, etc
+            product.setImageUrl(finalImageUrl);
+
 
             return productRepository.save(product);
 
         } catch (IllegalArgumentException e) {
-            // dispara pro Controller tratar como 400 Bad Request
             throw e;
         } catch (IOException e) {
             throw new RuntimeException("Erro ao processar a imagem", e);
