@@ -45,7 +45,6 @@ public class AuthController {
         String token = jwtUtils.generateToken(user);
 
         System.out.println("✅ AuthController: Usuário registrado com sucesso!");
-        System.out.println("✅ AuthController: Tipo de usuário: " + user.getType());
         System.out.println("✅ AuthController: Token gerado");
 
         AuthResponse response = new AuthResponse(token, user);
@@ -66,7 +65,6 @@ public class AuthController {
         User user = authService.getUserByEmail(request.email());
 
         System.out.println("✅ AuthController: Login bem-sucedido!");
-        System.out.println("✅ AuthController: Tipo de usuário: " + user.getType());
         System.out.println("✅ AuthController: Token gerado");
 
         AuthResponse response = new AuthResponse(token, user);

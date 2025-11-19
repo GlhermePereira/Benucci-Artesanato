@@ -63,6 +63,7 @@ public class ProductService {
                 finalImageUrl = productDTO.getImageUrl();
             }
 
+
             // ✅ Criar produto
             Product product = new Product();
             product.setName(productDTO.getName());

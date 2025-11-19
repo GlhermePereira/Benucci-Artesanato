@@ -10,7 +10,7 @@ public class UserDTO {
     private String password;
     private String phoneNumber;
     private String address;
-    private String type;
+    private String role;
     private String cpf;
 
     // ✅ método declarado como static e DENTRO da classe
@@ -21,8 +21,8 @@ public class UserDTO {
         dto.setPassword(user.getPassword());
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setAddress(user.getAddress());
-        dto.setType(user.getType());
         dto.setCpf(user.getCpf());
+        dto.setRole(user.getRole());
         return dto;
     }
 }

@@ -15,8 +15,6 @@ public class UserController {
 
     private final UserService userService;
 
-
-
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAll() {
         List<UserDTO> users = userService.getAll().stream()

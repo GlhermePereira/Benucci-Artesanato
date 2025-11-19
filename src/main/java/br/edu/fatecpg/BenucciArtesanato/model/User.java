@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
-
 @Entity
 @Table(name = "\"user\"")
 @Getter
@@ -31,29 +30,8 @@ public class User {
     private String phoneNumber;
     private String address;
 
-
     @Column(nullable = false)
     private String role;
-    @Column(nullable = false)
-    private String type;
-
-    @JsonProperty("type")
-    public String getType() {
-        if (role == null) return "USER";
-        return role.replace("ROLE_", "");
-    }
-
-
-    @JsonProperty("type")
-    public void setType(String type) {
-        if (type == null) {
-            this.role = "ROLE_USER";
-        } else if (type.startsWith("ROLE_")) {
-            this.role = type;
-        } else {
-            this.role = "ROLE_" + type.toUpperCase();
-        }
-    }
 
     @ToString.Exclude
     @JsonIgnore

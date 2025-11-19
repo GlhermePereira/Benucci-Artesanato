@@ -7,5 +7,5 @@ public record RegisterRequest(
         String phoneNumber,
         String address,
         String cpf,
-        String type // Changed from 'role' to 'type' to match frontend's RegisterRequest
+        String role // Changed from 'role' to 'type' to match frontend's RegisterRequest
 ) {}

@@ -35,13 +35,12 @@ public class AuthService {
 
     public User register(RegisterRequest request) {
 
+        // role padrão
+        String role = "ROLE_USER";
 
-        String role = "ROLE_USER"; // default
-        String type = "customer";   // default
-
-        if (request.type() != null && request.type().equalsIgnoreCase("admin")) {
+        // se vier "admin", vira ROLE_ADMIN
+        if (request.role() != null && request.role().equalsIgnoreCase("admin")) {
             role = "ROLE_ADMIN";
-            type = "admin";
         }
 
         User user = User.builder()
@@ -52,11 +51,11 @@ public class AuthService {
                 .address(request.address())
                 .cpf(request.cpf())
                 .role(role)
-                .type(type)
                 .build();
 
         return repository.save(user);
     }
+
 
 
     public User getUserByEmail(String email) {

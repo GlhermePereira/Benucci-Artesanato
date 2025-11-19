@@ -19,6 +19,13 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    /** Converte "admin" ou "ADMIN" → ROLE_ADMIN, senão ROLE_USER */
+    private String mapRole(String rawRole) {
+        if (rawRole == null) return "ROLE_USER";
+
+        String r = rawRole.toLowerCase();
+        return r.contains("admin") ? "ROLE_ADMIN" : "ROLE_USER";
+    }
 
     public User searchByEmail(String email) {
         Optional<User> user = userRepository.findByEmail(email);
@@ -38,28 +45,21 @@ public class UserService {
 
     // Register new user
     public User registerUser(UserDTO dto) {
-        if (dto == null) return null;
+        if (dto == null) throw new IllegalArgumentException("DTO não pode ser nulo");
 
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new RuntimeException("Email já cadastrado");
         }
 
-        User user = new User();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        // set optional fields if present
-        user.setPhoneNumber(dto.getPhoneNumber());
-        user.setAddress(dto.getAddress());
-        // map incoming DTO.type to security role field
-        if (dto.getType() != null) {
-            String t = dto.getType().toLowerCase();
-            if (t.contains("admin")) user.setRole("ROLE_ADMIN");
-            else user.setRole("ROLE_USER");
-        } else {
-            user.setRole("ROLE_USER");
-        }
-        user.setCpf(dto.getCpf());
+        User user = User.builder()
+                .name(dto.getName())
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .phoneNumber(dto.getPhoneNumber())
+                .address(dto.getAddress())
+                .cpf(dto.getCpf())
+                .role(mapRole(dto.getRole()))
+                .build();
 
         return userRepository.save(user);
     }
@@ -79,27 +79,21 @@ public class UserService {
 
     // Update user
     public User updateUser(Long id, UserDTO dto) {
-        Optional<User> userOpt = userRepository.findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        if (dto.getName() != null) user.setName(dto.getName());
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getPassword() != null)
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        if (dto.getPhoneNumber() != null) user.setPhoneNumber(dto.getPhoneNumber());
+        if (dto.getAddress() != null) user.setAddress(dto.getAddress());
+        if (dto.getRole() != null) user.setRole(mapRole(dto.getRole()));
+        if (dto.getCpf() != null) user.setCpf(dto.getCpf());
 
-            if (dto.getName() != null) user.setName(dto.getName());
-            if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-            if (dto.getPassword() != null) user.setPassword(passwordEncoder.encode(dto.getPassword()));
-            if (dto.getPhoneNumber() != null) user.setPhoneNumber(dto.getPhoneNumber());
-            if (dto.getAddress() != null) user.setAddress(dto.getAddress());
-            if (dto.getType() != null) {
-                String t = dto.getType().toLowerCase();
-                if (t.contains("admin")) user.setRole("ROLE_ADMIN");
-                else user.setRole("ROLE_USER");
-            }
-            if (dto.getCpf() != null) user.setCpf(dto.getCpf());
-
-            return userRepository.save(user);
-        }
-        return null;
+        return userRepository.save(user);
     }
+
 
     // Delete user
     public boolean deleteUser(Long id) {
