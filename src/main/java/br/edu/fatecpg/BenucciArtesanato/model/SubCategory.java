@@ -43,7 +43,7 @@ public class SubCategory {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JoinTable(
             name = "subcategory_theme",
             joinColumns = @JoinColumn(name = "subcategory_id"),
