@@ -28,7 +28,7 @@ public class Order {
 
     // Timestamp do banco (default CURRENT_TIMESTAMP)
     @Column(name = "created_at", insertable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     // Também existe no banco → deve estar na entidade
     @Column(name = "updated_at", insertable = false, updatable = false)

@@ -27,9 +27,7 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponseDTO(
                     payment.getMpPreferenceId(),
                     payment.getAmount(),
-                    order.getStatus().name(),
-                    payment.getSandboxLink(),
-                    payment.getInitPoint()
+                    order.getStatus().name()
             ));
 
         } catch (Exception e) {

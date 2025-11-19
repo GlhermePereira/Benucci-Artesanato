@@ -72,7 +72,7 @@ public class OrderService {
 
         return OrderDTO.builder()
                 .id(order.getId())
-                .orderDate(order.getCreatedAt())
+                .orderDate(order.getCreatedAt().toLocalDateTime())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name()) // retorna como String
                 .items(order.getItems().stream().map(item ->
@@ -93,7 +93,7 @@ public class OrderService {
         return orders.stream().map(order ->
                 OrderDTO.builder()
                         .id(order.getId())
-                        .orderDate(order.getCreatedAt())
+                        .orderDate(order.getCreatedAt().toLocalDateTime())
                         .totalAmount(order.getTotalAmount())
                         .status(order.getStatus().name())
                         .deliveryType(order.getDeliveryType())

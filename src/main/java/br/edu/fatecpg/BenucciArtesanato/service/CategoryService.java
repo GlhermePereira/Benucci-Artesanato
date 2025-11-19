@@ -2,10 +2,12 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.model.Category;
 import br.edu.fatecpg.BenucciArtesanato.model.SubCategory;
+import br.edu.fatecpg.BenucciArtesanato.model.Theme;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.CategoryDto;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.SubcategoryDto;
 import br.edu.fatecpg.BenucciArtesanato.repository.CategoryRepository;
 import br.edu.fatecpg.BenucciArtesanato.repository.SubcategoryRepository;
+import br.edu.fatecpg.BenucciArtesanato.repository.ThemeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final SubcategoryRepository subcategoryRepository;
+    private final ThemeRepository themeRepository;
 
 
     // =============================
@@ -39,7 +42,6 @@ public class CategoryService {
         return mapToCategoryDto(category);
     }
 
-
     public CategoryDto createCategory(CategoryDto dto) {
         categoryRepository.findByName(dto.getName())
                 .ifPresent(cat -> { throw new RuntimeException("Categoria já existe"); });
@@ -50,10 +52,45 @@ public class CategoryService {
                 .description(dto.getDescription())
                 .build();
 
-        Category saved = categoryRepository.save(category);
+        if (dto.getSubcategories() != null) {
+            List<SubCategory> subs = dto.getSubcategories().stream().map(subDto -> {
+                SubCategory sub = SubCategory.builder()
+                        .name(subDto.getName())
+                        .slug(subDto.getSlug())
+                        .description(subDto.getDescription())
+                        .category(category)
+                        .build();
 
+                // se houver temas, criar e associar
+                if (subDto.getThemes() != null) {
+                    List<Theme> themes = subDto.getThemes().stream().map(themeDto -> {
+                        // primeiro tenta buscar tema existente pelo nome para evitar duplicação
+                        Theme theme = themeRepository.findByName(themeDto.getName())
+                                .orElseGet(() -> Theme.builder()
+                                        .name(themeDto.getName())
+                                        .description(themeDto.getDescription())
+                                        .build());
+
+                        // associa o tema à subcategoria
+                        theme.getSubcategories().add(sub);
+
+                        return theme;
+                    }).toList();
+
+                    sub.setThemes(themes);
+                }
+
+                return sub;
+            }).toList();
+
+            category.setSubcategories(subs);
+        }
+
+        Category saved = categoryRepository.save(category);
         return mapToCategoryDto(saved);
     }
+
+
 
     public CategoryDto updateCategory(Long id, CategoryDto dto) {
         Category category = categoryRepository.findById(id)
