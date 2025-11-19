@@ -10,31 +10,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "subcategory")
+@Table(name = "theme")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SubCategory {
+public class Theme {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // FK → category.id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
-    @Column(nullable = false, length = 120)
+    @Column(nullable = false, length = 120, unique = true)
     private String name;
 
-    @Column(nullable = false, length = 160)
+    @Column(nullable = false, length = 160, unique = true)
     private String slug;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    // Relacionamento N:M → resolvido pela tabela subcategory_theme
+    @ManyToMany(mappedBy = "themes", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<SubCategory> subcategories = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -43,13 +43,4 @@ public class SubCategory {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "subcategory_theme",
-            joinColumns = @JoinColumn(name = "subcategory_id"),
-            inverseJoinColumns = @JoinColumn(name = "theme_id")
-    )
-    @Builder.Default
-    private List<Theme> themes = new ArrayList<>();
-
 }

@@ -1,10 +1,10 @@
 package br.edu.fatecpg.BenucciArtesanato.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
+
 @Entity
 @Table(name = "\"user\"")
 @Getter
@@ -24,6 +24,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore // nunca retorne senha no JSON
     private String password;
 
     private String cpf;
@@ -33,11 +34,13 @@ public class User {
     @Column(nullable = false)
     private String role;
 
+    // Relacionamento com pedidos
     @ToString.Exclude
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
+    // Relacionamento com reviews
     @ToString.Exclude
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

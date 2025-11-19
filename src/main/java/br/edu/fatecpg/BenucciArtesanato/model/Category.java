@@ -31,7 +31,7 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Relacionamento com Subcategory
+    // Uma categoria possui várias subcategorias
     @OneToMany(
             mappedBy = "category",
             cascade = CascadeType.ALL,

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,12 +21,18 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    // FK obrigatória (NOT NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // Timestamp do banco (default CURRENT_TIMESTAMP)
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    // Também existe no banco → deve estar na entidade
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 
     @Column(name = "delivery_type")
     private String deliveryType;
@@ -39,31 +46,36 @@ public class Order {
     @Column(name = "mp_preference_id")
     private String mpPreferenceId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus status = OrderStatus.pending;
+
     @ToString.Exclude
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
     @ToString.Exclude
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToOne(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            optional = true
+    )
     private Payment payment;
-
-    // Enum para status
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrderStatus status = OrderStatus.pending; // default
 
     public enum OrderStatus {
         pending, preparing, shipped, delivered, canceled;
 
         public static OrderStatus fromString(String status) {
-            for (OrderStatus s : OrderStatus.values()) {
-                if (s.name().equalsIgnoreCase(status)) {
-                    return s;
-                }
+            for (OrderStatus s : values()) {
+                if (s.name().equalsIgnoreCase(status)) return s;
             }
             throw new IllegalArgumentException("Status inválido: " + status);
         }
     }
-
 }
