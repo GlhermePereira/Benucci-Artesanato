@@ -2,36 +2,32 @@ package br.edu.fatecpg.BenucciArtesanato.record.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProductDTO {
     private Long id;
-    private Long categoryId;
     private String name;
     private String description;
-    private String imageUrl;
     private BigDecimal price;
     private Integer stock;
 
-    // Adicionar objeto category completo
-    private CategoryDTO category;
+    // Agora aceita várias imagens
+    private List<String> imageUrls;
+    private String mainImageUrl;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CategoryDTO {
-        private Long id;
-        private String name;
-        private List<CategoryDTO> subcategories;
-    }
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
+    private Long subcategoryId;
+    private String subcategoryName;
+
+    private Long categoryId;
+    private String categoryName;
+
+    private List<Long> themeIds;
+    private List<String> themeNames;
 }

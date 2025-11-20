@@ -1,10 +1,8 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
-import br.edu.fatecpg.BenucciArtesanato.model.Category;
-import br.edu.fatecpg.BenucciArtesanato.model.Product;
+import br.edu.fatecpg.BenucciArtesanato.model.*;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
-import br.edu.fatecpg.BenucciArtesanato.repository.CategoryRepository;
-import br.edu.fatecpg.BenucciArtesanato.repository.ProductRepository;
+import br.edu.fatecpg.BenucciArtesanato.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +13,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +26,12 @@ public class ProductService {
     @Autowired
     private SupabaseService supabaseService;
     @Autowired
+    private SubcategoryRepository SubcategoryRepository;
+    @Autowired
+    private  ThemeRepository themeRepository;
+    @Autowired
     private CategoryRepository categoryRepository;
+
 
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllDTO() {
@@ -43,117 +48,147 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
         return convertToDTO(product);
     }
-    public Product createProduct(ProductDTO productDTO, MultipartFile image) {
-        try {
-            String finalImageUrl;
 
-            // ✅ Caso 1: imagem enviada via upload local
-            if (image != null && !image.isEmpty()) {
+    // Assumindo que você usa este ProductCreationDTO para a entrada (Input)
+// Se não, você pode manter o nome ProductDTO e ignorar a sugestão abaixo.
+    @Transactional
+    public Product createProduct(ProductDTO dto, List<MultipartFile> images) {
 
-                validateFile(image);
+        SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
 
-                byte[] processedImage = resizeImage(image);
-                finalImageUrl = supabaseService.uploadImage(
-                        image.getOriginalFilename(),
-                        processedImage
+        Product product = new Product();
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setStock(dto.getStock());
+        product.setSubcategory(subcategory);
+
+        product = productRepository.save(product);
+
+        if (images != null && !images.isEmpty()) {
+
+            validateFiles(images);
+
+            for (MultipartFile file : images) {
+
+                byte[] processed = null;
+                try {
+                    processed = resizeImage(file);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String imageUrl = supabaseService.uploadImage(
+                        file.getOriginalFilename(),
+                        processed
                 );
 
-            } else {
-                // ✅ Caso 2: sem upload → usar imageUrl que veio no JSON
-                finalImageUrl = productDTO.getImageUrl();
+                ProductImage pi = new ProductImage();
+                pi.setImageUrl(imageUrl);
+
+                product.addImage(pi); // adiciona no produto
             }
-
-
-            // ✅ Criar produto
-            Product product = new Product();
-            product.setName(productDTO.getName());
-            product.setDescription(productDTO.getDescription());
-            product.setPrice(productDTO.getPrice());
-            product.setStock(productDTO.getStock());
-            product.setImageUrl(finalImageUrl);
-
-
-            return productRepository.save(product);
-
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new RuntimeException("Erro ao processar a imagem", e);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro interno ao criar produto", e);
         }
+
+        return productRepository.save(product);
     }
 
-    private void validateFile(MultipartFile file) {
-        List<String> allowedTypes = List.of(
+
+    private void validateFiles(List<MultipartFile> files) {
+        // 1. Definições de Regras
+        final List<String> allowedTypes = List.of(
                 "image/png",
                 "image/jpeg",
                 "image/jpg",
                 "image/webp",
                 "application/pdf"
         );
+        final long maxSize = 5 * 1024 * 1024; // 5 MB
 
-        String contentType = file.getContentType();
-        if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("Formato de arquivo não permitido: " + contentType);
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum arquivo de imagem foi fornecido.");
         }
 
-        long maxSize = 5 * 1024 * 1024; // 5 MB
-        if (file.getSize() > maxSize) {
-            throw new IllegalArgumentException("Arquivo muito grande. Máximo permitido: 5MB");
+        // 2. Iteração e Validação de Cada Arquivo
+        for (MultipartFile file : files) {
+
+            // Verifica se o arquivo está vazio
+            if (file.isEmpty()) {
+                throw new IllegalArgumentException("Um dos arquivos enviados está vazio.");
+            }
+
+            // Validação de Tipo (Content Type)
+            String contentType = file.getContentType();
+            if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
+                throw new IllegalArgumentException("Formato de arquivo não permitido: " + contentType);
+            }
+
+            // Validação de Tamanho
+            if (file.getSize() > maxSize) {
+                // Converte o limite de tamanho para MB para ser mais amigável na mensagem de erro
+                String maxMB = String.format("%.0fMB", (double) maxSize / (1024 * 1024));
+                throw new IllegalArgumentException("Arquivo '" + file.getOriginalFilename() +
+                        "' muito grande. Máximo permitido: " + maxMB);
+            }
         }
     }
-
 
     private byte[] resizeImage(MultipartFile file) throws IOException {
         String contentType = file.getContentType();
+        if (contentType == null)
+            throw new IllegalArgumentException("Arquivo sem content-type.");
 
-        // Apenas imagens suportadas pelo Thumbnailator
-        if (contentType != null &&
-                (contentType.equals("image/jpeg") ||
+        // Formatos suportados pelo Thumbnailator
+        boolean isThumbnailSupported =
+                contentType.equals("image/jpeg") ||
                         contentType.equals("image/png") ||
                         contentType.equals("image/bmp") ||
-                        contentType.equals("image/gif"))) {
+                        contentType.equals("image/gif");
 
+        // WEBP e outros formatos que Thumbnailator não redimensiona
+        boolean isGenericImage = contentType.startsWith("image/");
+
+        // === 1. Se for PDF → RECUSAR (ou adaptar depois caso queira) ===
+        if (contentType.equals("application/pdf")) {
+            throw new IllegalArgumentException("PDF não pode ser usado como imagem de produto.");
+        }
+
+        // === 2. Se não for imagem válida → bloquear ===
+        if (!isThumbnailSupported && !isGenericImage) {
+            throw new IllegalArgumentException("Formato de arquivo não suportado: " + contentType);
+        }
+
+        // === 3. Se for imagem pequena (< 800px), não redimensionar ===
+        BufferedImage original = ImageIO.read(file.getInputStream());
+        if (original == null) {
+            throw new IllegalArgumentException("Não foi possível ler a imagem.");
+        }
+
+        int width = original.getWidth();
+        int height = original.getHeight();
+
+        boolean precisaRedimensionar = width > 1500 || height > 1500;
+
+        // === 4. Redimensiona somente imagens muito grandes ===
+        if (isThumbnailSupported && precisaRedimensionar) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Thumbnails.of(file.getInputStream())
-                    .size(800, 800)
-                    .outputQuality(0.8)
+            Thumbnails.of(original)
+                    .size(1200, 1200)        // Maior resolução, menos perda de qualidade
+                    .outputQuality(0.90)     // QUASE sem perda
+                    .keepAspectRatio(true)
                     .toOutputStream(outputStream);
+
             return outputStream.toByteArray();
         }
-        // WebP, PDF ou outros formatos -> não redimensiona
-        else if (contentType != null && contentType.startsWith("image/")) {
-            // Você pode aceitar WebP sem redimensionar
-            return file.getBytes();
-        }
 
-        throw new IllegalArgumentException("Formato de arquivo não suportado. Apenas imagens válidas são permitidas.");
+        // === 5. WEBP e imagens pequenas → retornar como estão ===
+        return file.getBytes();
     }
 
 
 
-    @Transactional
-    public Product updateProduct(Long id, ProductDTO dto) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
-        // Atualizar campos
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setStock(dto.getStock());
-        product.setImageUrl(dto.getImageUrl());
-
-        // Atualizar categoria se fornecida
-        if (dto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(dto.getCategoryId())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-            product.setCategory(category);
-        }
-
-        return productRepository.save(product);
-    }
 
     @Transactional
     public boolean deleteProduct(Long id) {
@@ -163,27 +198,73 @@ public class ProductService {
         }
         return false;
     }
-
-    // Método auxiliar para converter Product -> ProductDTO
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
+
         dto.setId(product.getId());
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
         dto.setStock(product.getStock());
-        dto.setImageUrl(product.getImageUrl());
+        dto.setCreatedAt(product.getCreatedAt().toLocalDateTime());
+        dto.setUpdatedAt(product.getUpdatedAt().toLocalDateTime());
 
-        // Preencher categoryId e objeto category
-        if (product.getCategory() != null) {
-            dto.setCategoryId(product.getCategory().getId());
+        // --- imagens do produto (product_image) ---
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            List<String> urls = product.getImages().stream()
+                    .map(pi -> pi.getImageUrl())
+                    .collect(Collectors.toList());
+            dto.setImageUrls(urls);
 
-            ProductDTO.CategoryDTO categoryDTO = new ProductDTO.CategoryDTO();
-            categoryDTO.setId(product.getCategory().getId());
-            categoryDTO.setName(product.getCategory().getName());
-            dto.setCategory(categoryDTO);
+            // tentar achar imagem principal por isMain (se existir), senão a primeira
+            product.getImages().stream()
+                    .filter(pi -> {
+                        try {
+                            // se existir o campo isMain
+                            return (Boolean) pi.getClass().getMethod("isMain").invoke(pi);
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .findFirst()
+                    .ifPresent(pi -> dto.setMainImageUrl(pi.getImageUrl()));
+
+            if (dto.getMainImageUrl() == null && !urls.isEmpty()) {
+                dto.setMainImageUrl(urls.get(0));
+            }
+        } else {
+            dto.setImageUrls(List.of());
+            dto.setMainImageUrl(null);
+        }
+
+        // --- subcategoria e categoria (herdada) ---
+        SubCategory sub = product.getSubcategory();
+        if (sub != null) {
+            dto.setSubcategoryId(sub.getId());
+            dto.setSubcategoryName(sub.getName());
+
+            if (sub.getCategory() != null) {
+                dto.setCategoryId(sub.getCategory().getId());
+                dto.setCategoryName(sub.getCategory().getName());
+            }
+        }
+
+        // --- temas (herdados via subcategoria) ---
+        if (sub != null && sub.getThemes() != null && !sub.getThemes().isEmpty()) {
+            dto.setThemeIds(sub.getThemes().stream()
+                    .map(t -> t.getId())
+                    .collect(Collectors.toList()));
+
+            dto.setThemeNames(sub.getThemes().stream()
+                    .map(t -> t.getName())
+                    .collect(Collectors.toList()));
+        } else {
+            dto.setThemeIds(List.of());
+            dto.setThemeNames(List.of());
         }
 
         return dto;
     }
-}
+
+    }
+

@@ -1,16 +1,18 @@
 -- ========================================
--- Drop all tables
+-- Drop all tables (Ordem Inversa para FKs)
 -- ========================================
-DROP TABLE IF EXISTS subcategory_theme CASCADE;
-DROP TABLE IF EXISTS theme CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
 DROP TABLE IF EXISTS review CASCADE;
 DROP TABLE IF EXISTS order_item CASCADE;
 DROP TABLE IF EXISTS "order" CASCADE;
+DROP TABLE IF EXISTS product_theme CASCADE; -- Novo: Tabela N:N Produto-Tema
+DROP TABLE IF EXISTS subcategory_theme CASCADE;
+DROP TABLE IF EXISTS theme CASCADE;
 DROP TABLE IF EXISTS product CASCADE;
 DROP TABLE IF EXISTS subcategory CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
 DROP TABLE IF EXISTS "user" CASCADE;
+DROP TABLE IF EXISTS product_image CASCADE;
 
 -- ========================================
 -- User
@@ -42,6 +44,7 @@ CREATE TABLE category (
 
 -- ========================================
 -- SUBCATEGORY (category_id NOT NULL reforça 1:N obrigatório)
+-- Herda de CATEGORY
 -- ========================================
 CREATE TABLE subcategory (
     id SERIAL PRIMARY KEY,
@@ -55,7 +58,7 @@ CREATE TABLE subcategory (
 );
 
 -- ========================================
--- THEME (NOVA TABELA)
+-- THEME
 -- ========================================
 CREATE TABLE theme (
     id SERIAL PRIMARY KEY,
@@ -68,16 +71,17 @@ CREATE TABLE theme (
 
 -- ========================================
 -- SUBCATEGORY_THEME (N:M Resolução - PK COMPOSTA)
+-- Define os Temas VÁLIDOS/PERMITIDOS para uma Subcategoria.
+-- ESSA TABELA FOI MANTIDA PARA A REGRA DE NEGÓCIO DE VALIDAÇÃO.
 -- ========================================
 CREATE TABLE subcategory_theme (
     subcategory_id INT NOT NULL REFERENCES subcategory(id) ON DELETE CASCADE,
     theme_id INT NOT NULL REFERENCES theme(id) ON DELETE CASCADE,
-    -- PK Composta que resolve o relacionamento N:M
     PRIMARY KEY (subcategory_id, theme_id)
 );
 
 -- ========================================
--- Product (category_id NOT NULL reforça 1:N obrigatório)
+-- Product (Herda a Subcategoria)
 -- ========================================
 CREATE TABLE product (
     id SERIAL PRIMARY KEY,
@@ -85,11 +89,30 @@ CREATE TABLE product (
     description TEXT,
     price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
     stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
-    category_id INT NOT NULL REFERENCES category(id) ON DELETE RESTRICT,
-    image_url TEXT,
+
+    subcategory_id INT NOT NULL REFERENCES subcategory(id) ON DELETE RESTRICT,
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ========================================
+-- NOVO: PRODUCT_THEME (N:M Resolução - PK COMPOSTA)
+-- Permite que um Produto tenha múltiplos Temas específicos.
+-- ========================================
+CREATE TABLE product_theme (
+    product_id INT NOT NULL REFERENCES product(id) ON DELETE CASCADE,
+    theme_id INT NOT NULL REFERENCES theme(id) ON DELETE CASCADE,
+    -- PK Composta que resolve o relacionamento N:M
+    PRIMARY KEY (product_id, theme_id)
+);
+
+CREATE TABLE product_image (
+    id SERIAL PRIMARY KEY,
+    product_id INT NOT NULL REFERENCES product(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL
+);
+
 
 -- ========================================
 -- Order (user_id NOT NULL para garantir (1, 1))
@@ -117,7 +140,6 @@ CREATE TABLE order_item (
     unit_price NUMERIC(10,2) NOT NULL CHECK (unit_price >= 0),
     quantity INT NOT NULL CHECK (quantity > 0),
 
-    -- PK Composta que garante a unicidade do par (Pedido, Produto)
     PRIMARY KEY (order_id, product_id)
 );
 
@@ -132,7 +154,6 @@ CREATE TABLE review (
     comment TEXT,
     review_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    -- PK Composta (Usuário só avalia o Produto uma vez)
     PRIMARY KEY (user_id, product_id)
 );
 
@@ -149,7 +170,6 @@ CREATE TABLE payment (
     payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     amount NUMERIC(10,2) NOT NULL CHECK (amount >= 0),
 
-    -- UNIQUE Constraint para garantir o 1:1
     UNIQUE (order_id)
 );
 
@@ -158,7 +178,10 @@ CREATE TABLE payment (
 -- ========================================
 CREATE INDEX idx_user_email ON "user"(email);
 CREATE INDEX idx_subcategory_category ON subcategory(category_id);
-CREATE INDEX idx_product_category ON product(category_id);
+CREATE INDEX idx_product_subcategory ON product(subcategory_id);
+-- NOVO: Índice para a nova tabela de relacionamento
+CREATE INDEX idx_product_theme_product ON product_theme(product_id);
+CREATE INDEX idx_product_theme_theme ON product_theme(theme_id);
 CREATE INDEX idx_order_user ON "order"(user_id);
 CREATE INDEX idx_order_status ON "order"(status);
 CREATE INDEX idx_order_item_order ON order_item(order_id);

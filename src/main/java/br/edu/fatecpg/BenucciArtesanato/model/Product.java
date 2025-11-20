@@ -4,17 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Table(name = "product")
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Getter
-@Setter
 public class Product {
 
     @Id
@@ -29,31 +31,22 @@ public class Product {
     private BigDecimal price;
 
     private Integer stock;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
-    @Column(name = "created_at")
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
-
+    @UpdateTimestamp
     @Column(name = "updated_at")
-    @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
+    private OffsetDateTime updatedAt;
     @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @JoinColumn(name = "subcategory_id", nullable = false)
+    private SubCategory subcategory;
 
-    // Product → Review (1:N)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    @Builder.Default
-    private List<Review> reviews = new ArrayList<>();
+    private List<ProductImage> images = new ArrayList<>();
 
-    // Product → OrderItem (1:N)
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    @Builder.Default
-    private List<OrderItem> orderItems = new ArrayList<>();
+    public void addImage(ProductImage img) {
+        img.setProduct(this);
+        this.images.add(img);
+    }
 }
