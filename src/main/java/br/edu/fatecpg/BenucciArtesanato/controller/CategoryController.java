@@ -3,11 +3,9 @@ package br.edu.fatecpg.BenucciArtesanato.controller;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.CategoryDto;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.CategoryInputDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.CategorySimpleDTO;
-import br.edu.fatecpg.BenucciArtesanato.record.dto.SubcategoryDto;
 import br.edu.fatecpg.BenucciArtesanato.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -69,42 +67,7 @@ public class CategoryController {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
-
-
-    // ================================
-    // SUBCATEGORY ENDPOINTS
-    // ================================
-
-    @Operation(summary = "Listar Subcategorias da Categoria")
-    @GetMapping("/{categoryId}/subcategories")
-    public ResponseEntity<List<SubcategoryDto>> getSubcategoriesByCategory(@PathVariable Long categoryId) {
-        return ResponseEntity.ok(categoryService.getSubcategoriesByCategory(categoryId));
-    }
-
-    @Operation(summary = "Criar Subcategoria")
-    @PostMapping("/{categoryId}/subcategories")
-    public ResponseEntity<SubcategoryDto> createSubcategory(@PathVariable Long categoryId,
-                                                            @RequestBody SubcategoryDto dto) {
-        return ResponseEntity.ok(categoryService.createSubcategory(categoryId, dto));
-    }
-
-    @Operation(summary = "Atualizar Subcategoria")
-    @PutMapping("/{categoryId}/subcategories/{subcategoryId}")
-    public ResponseEntity<SubcategoryDto> updateSubcategory(
-            @PathVariable Long categoryId,
-            @PathVariable Long subcategoryId,
-            @RequestBody SubcategoryDto dto
-    ) {
-        return ResponseEntity.ok(categoryService.updateSubcategory(categoryId, subcategoryId, dto));
-    }
-
-    @Operation(summary = "Excluir Subcategoria")
-    @DeleteMapping("/{categoryId}/subcategories/{subcategoryId}")
-    public ResponseEntity<Void> deleteSubcategory(
-            @PathVariable Long categoryId,
-            @PathVariable Long subcategoryId
-    ) {
-        categoryService.deleteSubcategory(categoryId, subcategoryId);
-        return ResponseEntity.noContent().build();
-    }
 }
+
+
+    // =========

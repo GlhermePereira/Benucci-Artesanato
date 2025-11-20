@@ -19,5 +19,4 @@ public class SubcategoryDto {
     private String slug;
     private String description;
     private Long categoryId;
-    private List<ThemeDto> themes;
 }
