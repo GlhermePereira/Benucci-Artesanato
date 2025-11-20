@@ -61,22 +61,36 @@ public class CategoryService {
     }
 
     public CategoryDto updateCategory(Long id, CategoryDto dto) {
+
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
+        // Verifica se outro registro já usa esse nome
+        categoryRepository.findByName(dto.getName())
+                .filter(existing -> !existing.getId().equals(id))  // impede comparar com ele mesmo
+                .ifPresent(existing -> {
+                    throw new IllegalStateException(
+                            "Já existe outra categoria com o nome '" + dto.getName() + "'."
+                    );
+                });
+
+        // Atualiza dados
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
-        category.setSlug(dto.getSlug());
+        category.setSlug(SlugUtil.generateSlug(category.getName()));
 
-        return mapToCategoryDto(categoryRepository.save(category));
+        Category updated = categoryRepository.save(category);
+
+        return mapToCategoryDto(updated);
     }
-
     public void deleteCategory(Long id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Categoria não encontrada");
-        }
-        categoryRepository.deleteById(id);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        // Apaga categoria e todas as subcategorias automaticamente
+        categoryRepository.delete(category);
     }
+
 
     // =============================
     // MAPPER

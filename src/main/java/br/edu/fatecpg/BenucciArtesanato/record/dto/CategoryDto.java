@@ -19,6 +19,4 @@ public class CategoryDto {
     private String slug;
     private String description;
 
-    // lista de subcategorias pertencentes à categoria
-    private List<SubcategoryDto> subcategories;
 }
