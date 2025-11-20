@@ -22,11 +22,12 @@ public class SubCategoryService {
     // =============================
 
     public List<SubcategoryDto> getSubcategoriesByCategory(Long categoryId) {
-        return subcategoryRepository.findByCategoryId(categoryId)
+        return subcategoryRepository.findByCategoryIdOrderByNameAsc(categoryId)
                 .stream()
                 .map(this::mapToDto)
                 .toList();
     }
+
 
     // =============================
     // CRIAR SUBCATEGORY

@@ -2,21 +2,15 @@ package br.edu.fatecpg.BenucciArtesanato.record.dto;
 
 import lombok.*;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ThemeDto {
-
+public class ThemeInputDTO {
     private Long id;
     private String name;
-    private String slug;
     private String description;
+    private String slug;
 
-    // IDs das subcategorias vinculadas
-    @Builder.Default
-    private List<Long> subcategoryIds = List.of();
 }

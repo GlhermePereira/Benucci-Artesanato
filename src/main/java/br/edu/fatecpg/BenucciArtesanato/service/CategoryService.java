@@ -38,11 +38,12 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategorySimpleDTO> getSimpleCategories() {
-        return categoryRepository.findAll()
+        return categoryRepository.findAllByOrderByNameAsc()
                 .stream()
                 .map(c -> new CategorySimpleDTO(c.getId(), c.getName()))
                 .toList();
     }
+
 
     public CategoryDto createCategory(CategoryInputDTO dto) {
 

@@ -21,6 +21,7 @@ public interface SubcategoryRepository extends JpaRepository<SubCategory, Long> 
 
     // Busca por slug dentro de uma categoria (reflete UNIQUE(category_id, slug))
     Optional<SubCategory> findByCategoryIdAndSlug(Long categoryId, String slug);
+    List<SubCategory> findByCategoryIdOrderByNameAsc(Long categoryId);
 
     boolean existsByNameAndCategoryId(String name, Long categoryId);
 }
