@@ -2,6 +2,7 @@ package br.edu.fatecpg.BenucciArtesanato.repository;
 
 import br.edu.fatecpg.BenucciArtesanato.model.SubCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +25,13 @@ public interface SubcategoryRepository extends JpaRepository<SubCategory, Long> 
     List<SubCategory> findByCategoryIdOrderByNameAsc(Long categoryId);
 
     boolean existsByNameAndCategoryId(String name, Long categoryId);
+
+    @Query("""
+    SELECT s 
+    FROM SubCategory s
+    JOIN FETCH s.category
+    WHERE s.id = :id
+""")
+    Optional<SubCategory> findByIdWithCategory(Long id);
+
 }

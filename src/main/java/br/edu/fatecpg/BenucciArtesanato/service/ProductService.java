@@ -5,6 +5,7 @@ import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.UpdateProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.*;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -135,13 +136,22 @@ public class ProductService {
 
     }
 
+
+
     @Transactional
     public Product updateProduct(Long id, UpdateProductDTO dto, List<MultipartFile> images) {
+
 
         // ----- 1) Buscar produto existente -----
         Product product = productRepository.findByIdFull(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
+        Hibernate.initialize(product.getImages());
+        Hibernate.initialize(product.getProductThemes());
 
+        List<String> imageUrls = product.getImages()
+                .stream()
+                .map(ProductImage::getImageUrl)
+                .toList();
 
         // ----- 2) Atualizar campos básicos -----
         if (dto.getName() != null) product.setName(dto.getName());
@@ -151,9 +161,12 @@ public class ProductService {
 
         // ----- 3) Atualizar subcategoria -----
         if (dto.getSubcategoryId() != null) {
-            SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
+            SubCategory subcategory = SubcategoryRepository.findByIdWithCategory(dto.getSubcategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
+
             product.setSubcategory(subcategory);
+
+
         }
 
         // ----- 4) Atualizar temas (product_theme) -----
@@ -367,7 +380,7 @@ public class ProductService {
         }
         return false;
     }
-    private ProductDTO convertToDTO(Product product) {
+    public ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
 
         dto.setId(product.getId());

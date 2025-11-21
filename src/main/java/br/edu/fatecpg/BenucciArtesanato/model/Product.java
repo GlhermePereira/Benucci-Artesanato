@@ -50,7 +50,7 @@ public class Product {
     // --------------------------
     // IMAGENS (1:N)
     // --------------------------
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<ProductImage> images = new HashSet<>();
 
     public void addImage(ProductImage img) {

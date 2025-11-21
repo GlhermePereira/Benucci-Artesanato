@@ -1,9 +1,7 @@
 package br.edu.fatecpg.BenucciArtesanato.controller;
 
 import br.edu.fatecpg.BenucciArtesanato.model.Product;
-import br.edu.fatecpg.BenucciArtesanato.model.ProductImage;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
-import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductMapper;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.UpdateProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.service.ProductService;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -35,17 +32,14 @@ public class ProductController {
     private final ProductService productService;
     private final SupabaseService supabaseService;
     private final ObjectMapper objectMapper;
-    private final ProductMapper productMapper; // <--- campo
 
     @Autowired
     public ProductController(ProductService productService,
                              SupabaseService supabaseService,
-                             ObjectMapper objectMapper,
-                             ProductMapper productMapper) {
+                             ObjectMapper objectMapper) {
         this.productService = productService;
         this.supabaseService = supabaseService;
         this.objectMapper = objectMapper;
-        this.productMapper = productMapper; // <--- inicializa
     }
     @Operation(summary = "Listar produtos com paginação", description = "Retorna uma lista paginada de produtos cadastrados.")
     @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso",
@@ -122,7 +116,7 @@ public class ProductController {
         dto.setThemeIds(themeIds);
 
         Product updated = productService.updateProduct(id, dto, images);
-        ProductDTO responseDTO = productMapper.toDTO(updated);
+        ProductDTO responseDTO = productService.convertToDTO(updated);
 
         return ResponseEntity.ok(responseDTO);
     }
