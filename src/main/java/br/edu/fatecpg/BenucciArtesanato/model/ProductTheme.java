@@ -21,12 +21,10 @@ public class ProductTheme implements Serializable {
     @EmbeddedId
     private ProductThemeId id;
 
-    // Relacionamento ManyToOne para Produto
-    // @MapsId mapeia o atributo 'productId' da chave composta para esta FK
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("productId")
     @JoinColumn(name = "product_id")
-    @JsonIgnore // Evita loops infinitos de serialização JSON
+    @JsonIgnore
     private Product product;
 
     // Relacionamento ManyToOne para Tema
@@ -36,7 +34,6 @@ public class ProductTheme implements Serializable {
     @JoinColumn(name = "theme_id")
     private Theme theme;
 
-    // Construtor utilitário para facilitar a criação de novos registros
     public ProductTheme(Product product, Theme theme) {
         this.product = product;
         this.theme = theme;

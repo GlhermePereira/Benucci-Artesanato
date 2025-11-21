@@ -89,9 +89,7 @@ CREATE TABLE product (
     description TEXT,
     price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
     stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
-
     subcategory_id INT NOT NULL REFERENCES subcategory(id) ON DELETE RESTRICT,
-
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -9,12 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import net.coobird.thumbnailator.Thumbnails;
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +28,12 @@ public class ProductService {
     private  ThemeRepository themeRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductThemeRepository productThemeRepository;
+    @Autowired
+    private ProductImageRepository productImageRepository;
+    @Autowired
+    private SubcategoryThemeRepository subcategoryThemeRepository;
 
 
     @Transactional(readOnly = true)
@@ -52,11 +55,13 @@ public class ProductService {
     // Assumindo que você usa este ProductCreationDTO para a entrada (Input)
 // Se não, você pode manter o nome ProductDTO e ignorar a sugestão abaixo.
     @Transactional
-    public Product createProduct(ProductDTO dto, List<MultipartFile> images) {
+    public void createProduct(ProductDTO dto, List<MultipartFile> images) {
 
+        // ----- 1) Validar subcategoria -----
         SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
 
+        // ----- 2) Criar produto -----
         Product product = new Product();
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
@@ -66,15 +71,44 @@ public class ProductService {
 
         product = productRepository.save(product);
 
+        // ----- 3) VALIDAR E SALVAR THEMES (product_theme) -----
+        // ----- 3) SALVAR THEMES (product_theme) -----
+        // ----- 3) SALVAR THEMES (product_theme) -----
+        if (dto.getThemeIds() != null && !dto.getThemeIds().isEmpty()) {
+
+            // buscar os temas permitidos para a subcategoria
+            List<Long> allowedThemes = subcategoryThemeRepository
+                    .findThemeIdsBySubcategoryId(dto.getSubcategoryId());
+
+            for (Long themeId : dto.getThemeIds()) {
+
+                if (!allowedThemes.contains(themeId)) {
+                    throw new IllegalArgumentException(
+                            "O tema ID " + themeId + " não é permitido para esta subcategoria");
+                }
+
+                // Buscar a entidade Theme para criar o relacionamento
+                Theme theme = themeRepository.findById(themeId)
+                        .orElseThrow(() -> new IllegalArgumentException("Tema não encontrado"));
+
+                ProductTheme pt = new ProductTheme(product, theme); // usa o construtor que monta o id composto
+
+                productThemeRepository.save(pt);
+            }
+        }
+
+
+
+        // ----- 4) IMAGENS (product_image) -----
         if (images != null && !images.isEmpty()) {
 
-            validateFiles(images);
+            validateFiles(images); // você já tinha
 
             for (MultipartFile file : images) {
 
-                byte[] processed = null;
+                byte[] processed;
                 try {
-                    processed = resizeImage(file);
+                    processed = resizeImage(file); // como já usa
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -86,13 +120,14 @@ public class ProductService {
 
                 ProductImage pi = new ProductImage();
                 pi.setImageUrl(imageUrl);
+                pi.setProduct(product);
 
-                product.addImage(pi); // adiciona no produto
+                productImageRepository.save(pi);
             }
         }
 
-        return productRepository.save(product);
     }
+
 
 
     private void validateFiles(List<MultipartFile> files) {
@@ -135,6 +170,66 @@ public class ProductService {
     }
 
     private byte[] resizeImage(MultipartFile file) throws IOException {
+        BufferedImage original = ImageIO.read(file.getInputStream());
+        if (original == null) {
+            throw new IllegalArgumentException("Não foi possível ler a imagem.");
+        }
+
+        int width = original.getWidth();
+        int height = original.getHeight();
+        boolean precisaRedimensionar = width > 1500 || height > 1500;
+
+        // Detecta se é um formato suportado pelo Thumbnailator
+        boolean thumbnailSupported = isThumbnailSupported(file);
+
+        // Redimensiona apenas imagens grandes e suportadas
+        if (thumbnailSupported && precisaRedimensionar) {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Thumbnails.of(original)
+                    .size(1200, 1200)
+                    .keepAspectRatio(true)
+                    .outputQuality(0.9)
+                    .outputFormat(getFormat(file)) // especifica formato
+                    .toOutputStream(outputStream);
+
+            return outputStream.toByteArray();
+        }
+
+        // Para WebP e imagens pequenas → retorna como estão
+        return file.getBytes();
+    }
+
+    private boolean isThumbnailSupported(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null)
+            throw new IllegalArgumentException("Arquivo sem content-type.");
+
+        // Formatos que Thumbnailator consegue processar
+        return contentType.equals("image/jpeg") ||
+                contentType.equals("image/jpg") ||
+                contentType.equals("image/png") ||
+                contentType.equals("image/bmp") ||
+                contentType.equals("image/gif");
+    }
+
+    private String getFormat(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null)
+            throw new IllegalArgumentException("Arquivo sem Content-Type.");
+
+        return switch (contentType) {
+            case "image/jpeg", "image/jpg" -> "jpg";
+            case "image/png" -> "png";
+            case "image/bmp" -> "bmp";
+            case "image/gif" -> "gif";
+            default -> throw new IllegalArgumentException(
+                    "Formato não suportado para redimensionamento: " + contentType
+            );
+        };
+    }
+
+
+    private static boolean isIsThumbnailSupported(MultipartFile file) {
         String contentType = file.getContentType();
         if (contentType == null)
             throw new IllegalArgumentException("Arquivo sem content-type.");
@@ -158,36 +253,8 @@ public class ProductService {
         if (!isThumbnailSupported && !isGenericImage) {
             throw new IllegalArgumentException("Formato de arquivo não suportado: " + contentType);
         }
-
-        // === 3. Se for imagem pequena (< 800px), não redimensionar ===
-        BufferedImage original = ImageIO.read(file.getInputStream());
-        if (original == null) {
-            throw new IllegalArgumentException("Não foi possível ler a imagem.");
-        }
-
-        int width = original.getWidth();
-        int height = original.getHeight();
-
-        boolean precisaRedimensionar = width > 1500 || height > 1500;
-
-        // === 4. Redimensiona somente imagens muito grandes ===
-        if (isThumbnailSupported && precisaRedimensionar) {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Thumbnails.of(original)
-                    .size(1200, 1200)        // Maior resolução, menos perda de qualidade
-                    .outputQuality(0.90)     // QUASE sem perda
-                    .keepAspectRatio(true)
-                    .toOutputStream(outputStream);
-
-            return outputStream.toByteArray();
-        }
-
-        // === 5. WEBP e imagens pequenas → retornar como estão ===
-        return file.getBytes();
+        return isThumbnailSupported;
     }
-
-
-
 
 
     @Transactional
@@ -212,7 +279,7 @@ public class ProductService {
         // --- imagens do produto (product_image) ---
         if (product.getImages() != null && !product.getImages().isEmpty()) {
             List<String> urls = product.getImages().stream()
-                    .map(pi -> pi.getImageUrl())
+                    .map(ProductImage::getImageUrl)
                     .collect(Collectors.toList());
             dto.setImageUrls(urls);
 
@@ -252,11 +319,11 @@ public class ProductService {
         // --- temas (herdados via subcategoria) ---
         if (sub != null && sub.getThemes() != null && !sub.getThemes().isEmpty()) {
             dto.setThemeIds(sub.getThemes().stream()
-                    .map(t -> t.getId())
+                    .map(Theme::getId)
                     .collect(Collectors.toList()));
 
             dto.setThemeNames(sub.getThemes().stream()
-                    .map(t -> t.getName())
+                    .map(Theme::getName)
                     .collect(Collectors.toList()));
         } else {
             dto.setThemeIds(List.of());

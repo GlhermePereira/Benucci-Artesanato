@@ -18,4 +18,5 @@ public interface SubcategoryThemeRepository extends JpaRepository<SubCategory, L
 
     @Query(value = "SELECT theme_id FROM subcategory_theme WHERE subcategory_id = :subcategoryId", nativeQuery = true)
     List<Long> findThemeIdsBySubcategoryId(Long subcategoryId);
+
 }

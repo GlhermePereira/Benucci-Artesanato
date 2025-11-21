@@ -56,45 +56,30 @@ public class ProductController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
+    }@PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Criar um novo produto", description = "Cria um produto com imagem (somente usuários ADMIN).")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Erro de validação nos dados do produto"),
-            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
-    })
-    public ResponseEntity<String> createProduct(
-            @Parameter(description = "JSON do produto")
+    public ResponseEntity<?> createProduct(
             @RequestPart("product") String productJson,
-
-            @Parameter(description = "Lista de imagens do produto (opcional)")
-            @RequestPart(value = "images", required = false)
-            List<MultipartFile> images
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
         try {
-            // Converte JSON → DTO
-            ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
+            // Desserializa manualmente o JSON para ProductDTO
+            ProductDTO dto = objectMapper.readValue(productJson, ProductDTO.class);
 
-            // Chama o service corretamente
-            productService.createProduct(productDTO, images);
+            productService.createProduct(dto, images);
 
             return ResponseEntity.ok("Produto criado com sucesso!");
-
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Erro: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Erro: " + e.getMessage());
         }
     }
 
 
 
-//    @Operation(summary = "Atualizar produto", description = "Atualiza um produto existente pelo ID (somente ADMIN).")
+    //    @Operation(summary = "Atualizar produto", description = "Atualiza um produto existente pelo ID (somente ADMIN).")
 //    @ApiResponses({
 //            @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso", content = @Content(schema = @Schema(implementation = ProductDTO.class))),
 //            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
@@ -126,46 +111,51 @@ public class ProductController {
 //            return ResponseEntity.status(500).build();
 //        }
 //    }
-    private ProductDTO mapToDTO(Product product) {
-
+    public ProductDTO toDTO(Product product) {
         ProductDTO dto = new ProductDTO();
+
         dto.setId(product.getId());
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
         dto.setStock(product.getStock());
 
-        // ===== SUBCATEGORY =====
-        if (product.getSubcategory() != null) {
-            dto.setSubcategoryId(product.getSubcategory().getId());
-            dto.setSubcategoryName(product.getSubcategory().getName());
+        dto.setSubcategoryId(product.getSubcategory().getId());
+        dto.setSubcategoryName(product.getSubcategory().getName());
 
-            // ===== CATEGORY (vem da SUBCATEGORY) =====
-            if (product.getSubcategory().getCategory() != null) {
-                dto.setCategoryId(product.getSubcategory().getCategory().getId());
-                dto.setCategoryName(product.getSubcategory().getCategory().getName());
-            }
+        dto.setCategoryId(product.getSubcategory().getCategory().getId());
+        dto.setCategoryName(product.getSubcategory().getCategory().getName());
+
+        // imagens
+        dto.setImageUrls(
+                product.getImages().stream()
+                        .map(ProductImage::getImageUrl)
+                        .toList()
+        );
+
+        if (!product.getImages().isEmpty()) {
+            dto.setMainImageUrl(product.getImages().get(0).getImageUrl());
         }
 
-        // ===== IMAGENS =====
-        List<String> imageUrls = product.getImages()
-                .stream()
-                .map(ProductImage::getImageUrl)
-                .toList();
+        // themes
+        dto.setThemeIds(
+                product.getProductThemes().stream()
+                        .map(pt -> pt.getTheme().getId())
+                        .toList()
+        );
 
-        dto.setImageUrls(imageUrls);
+        dto.setThemeNames(
+                product.getProductThemes().stream()
+                        .map(pt -> pt.getTheme().getName())
+                        .toList()
+        );
 
-        // Primeira imagem como capa (se quiser)
-        if (!imageUrls.isEmpty()) {
-            dto.setMainImageUrl(imageUrls.get(0));
-        }
-
-        // Datas
         dto.setCreatedAt(product.getCreatedAt().toLocalDateTime());
         dto.setUpdatedAt(product.getUpdatedAt().toLocalDateTime());
 
         return dto;
     }
+
 
 
     @Operation(summary = "Excluir produto", description = "Remove um produto pelo ID (somente ADMIN).")

@@ -2,6 +2,7 @@ package br.edu.fatecpg.BenucciArtesanato.repository;
 
 import br.edu.fatecpg.BenucciArtesanato.model.Theme;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,6 +16,8 @@ public interface ThemeRepository extends JpaRepository<Theme, Long> {
 
     // Busca por slug (útil para URL amigável)
     Optional<Theme> findBySlug(String slug);
+
+
 
     // Lista todos os temas de uma subcategoria específica
     List<Theme> findBySubcategoriesId(Long subcategoryId);
