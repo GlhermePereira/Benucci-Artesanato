@@ -8,7 +8,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "product")
@@ -48,8 +50,8 @@ public class Product {
     // --------------------------
     // IMAGENS (1:N)
     // --------------------------
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductImage> images = new ArrayList<>();
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<ProductImage> images = new HashSet<>();
 
     public void addImage(ProductImage img) {
         img.setProduct(this);
@@ -59,9 +61,8 @@ public class Product {
     // --------------------------
     // TEMAS (N:M via product_theme)
     // --------------------------
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductTheme> productThemes = new ArrayList<>();
-
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<ProductTheme> productThemes = new HashSet<>();
     public void addTheme(ProductTheme pt) {
         pt.setProduct(this);
         this.productThemes.add(pt);

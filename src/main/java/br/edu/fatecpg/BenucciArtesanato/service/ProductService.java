@@ -2,14 +2,20 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.model.*;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import net.coobird.thumbnailator.Thumbnails;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import org.springframework.data.domain.Pageable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -128,6 +134,80 @@ public class ProductService {
 
     }
 
+    @Transactional
+    public Product updateProduct(Long id, ProductDTO dto, List<MultipartFile> images) {
+
+        // ----- 1) Buscar produto existente -----
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
+
+        // ----- 2) Validar subcategoria -----
+        SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
+
+        // ----- 3) Atualizar campos básicos -----
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setStock(dto.getStock());
+        product.setSubcategory(subcategory);
+
+        product = productRepository.save(product);
+
+        // ----- 4) Atualizar themes -----
+        if (dto.getThemeIds() != null && !dto.getThemeIds().isEmpty()) {
+
+            // buscar temas permitidos para a subcategoria
+            List<Long> allowedThemes = subcategoryThemeRepository
+                    .findThemeIdsBySubcategoryId(dto.getSubcategoryId());
+
+            // remover themes antigos
+            productThemeRepository.deleteByProductId(product.getId());
+
+            for (Long themeId : dto.getThemeIds()) {
+                if (!allowedThemes.contains(themeId)) {
+                    throw new IllegalArgumentException(
+                            "O tema ID " + themeId + " não é permitido para esta subcategoria");
+                }
+
+                Theme theme = themeRepository.findById(themeId)
+                        .orElseThrow(() -> new IllegalArgumentException("Tema não encontrado"));
+
+                ProductTheme pt = new ProductTheme(product, theme);
+                productThemeRepository.save(pt);
+            }
+        }
+
+        // ----- 5) Atualizar imagens -----
+        if (images != null && !images.isEmpty()) {
+
+            validateFiles(images); // valida arquivos
+
+            // remover imagens antigas do produto
+            productImageRepository.findByProductId(product.getId());
+
+            for (MultipartFile file : images) {
+                byte[] processed;
+                try {
+                    processed = resizeImage(file); // redimensiona
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String imageUrl = supabaseService.uploadImage(
+                        file.getOriginalFilename(),
+                        processed
+                );
+
+                ProductImage pi = new ProductImage();
+                pi.setImageUrl(imageUrl);
+                pi.setProduct(product);
+                productImageRepository.save(pi);
+            }
+        }
+
+        return product;
+    }
 
 
     private void validateFiles(List<MultipartFile> files) {
@@ -255,6 +335,27 @@ public class ProductService {
         }
         return isThumbnailSupported;
     }
+    @Transactional(readOnly = true)
+    public ProductPageDTO getPaginatedProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Product> productPage = productRepository.findAllWithDetails(pageable);
+
+        List<ProductDTO> dtos = productPage.getContent().stream()
+                .map(this::convertToDTO)
+                .toList();
+
+        return new ProductPageDTO(
+                dtos,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalPages(),
+                productPage.getTotalElements()
+        );
+    }
+
+
+
+
 
 
     @Transactional

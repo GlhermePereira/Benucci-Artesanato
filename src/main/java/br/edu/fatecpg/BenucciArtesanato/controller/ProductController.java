@@ -3,6 +3,7 @@ package br.edu.fatecpg.BenucciArtesanato.controller;
 import br.edu.fatecpg.BenucciArtesanato.model.Product;
 import br.edu.fatecpg.BenucciArtesanato.model.ProductImage;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
 import br.edu.fatecpg.BenucciArtesanato.service.ProductService;
 import br.edu.fatecpg.BenucciArtesanato.service.SupabaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,16 +32,22 @@ public class ProductController {
     private ProductService productService;
     @Autowired
     private SupabaseService supabaseService;
+@Autowired
+private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    @Operation(summary = "Listar todos os produtos", description = "Retorna uma lista de todos os produtos cadastrados.")
+    @Operation(summary = "Listar produtos com paginação", description = "Retorna uma lista paginada de produtos cadastrados.")
     @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductPageDTO.class)))
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<ProductDTO> products = productService.getAllDTO();
-        return ResponseEntity.ok(products);
+    public ResponseEntity<ProductPageDTO> getProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        ProductPageDTO pagedProducts = productService.getPaginatedProducts(page, size);
+        return ResponseEntity.ok(pagedProducts);
     }
+
+
 
     @Operation(summary = "Ver um produto específico", description = "Retorna os detalhes de um produto pelo seu ID.")
     @ApiResponses({
@@ -78,39 +85,40 @@ public class ProductController {
     }
 
 
+    @Operation(summary = "Atualizar produto", description = "Atualiza um produto existente pelo ID (somente ADMIN).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso", content = @Content(schema = @Schema(implementation = ProductDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductDTO> updateProduct(
+            @Parameter(description = "ID do produto a ser atualizado", required = true)
+            @PathVariable Long id,
 
-    //    @Operation(summary = "Atualizar produto", description = "Atualiza um produto existente pelo ID (somente ADMIN).")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso", content = @Content(schema = @Schema(implementation = ProductDTO.class))),
-//            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
-//    })
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PutMapping("/{id}")
-//    public ResponseEntity<ProductDTO> updateProduct(
-//            @Parameter(description = "ID do produto a ser atualizado", required = true)
-//            @PathVariable Long id,
-//
-//            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-//                    description = "Dados do produto para atualização",
-//                    required = true,
-//                    content = @Content(schema = @Schema(implementation = ProductDTO.class))
-//            )
-//            @RequestBody ProductDTO productDTO
-//    ) {
-//        try {
-//            Product updated = productService.updateProduct(id, productDTO);
-//
-//            // Mapear entidade para DTO antes de retornar
-//            ProductDTO responseDTO = mapToDTO(updated);
-//
-//            return ResponseEntity.ok(responseDTO);
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.notFound().build();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(500).build();
-//        }
-//    }
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados do produto para atualização",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = ProductDTO.class))
+            )
+            @RequestPart("product") ProductDTO productDTO,  // agora multipart
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        try {
+            Product updated = productService.updateProduct(id, productDTO, images);
+
+            ProductDTO responseDTO = toDTO(updated);
+
+            return ResponseEntity.ok(responseDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+
     public ProductDTO toDTO(Product product) {
         ProductDTO dto = new ProductDTO();
 
@@ -134,7 +142,7 @@ public class ProductController {
         );
 
         if (!product.getImages().isEmpty()) {
-            dto.setMainImageUrl(product.getImages().get(0).getImageUrl());
+            ProductImage firstImage = product.getImages().iterator().next();
         }
 
         // themes
@@ -155,6 +163,7 @@ public class ProductController {
 
         return dto;
     }
+
 
 
 
