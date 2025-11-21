@@ -25,8 +25,10 @@ public interface ProductThemeRepository extends JpaRepository<ProductTheme, Prod
     @Query("SELECT pt.id.themeId FROM ProductTheme pt WHERE pt.id.productId = :productId")
     List<Long> findThemeIdsByProductId(Long productId);
 
-    @Transactional
+
     @Modifying
+    @Transactional
     @Query("DELETE FROM ProductTheme pt WHERE pt.product.id = :productId")
-    void deleteByProductId(@Param("productId") Long productId);
+    void deleteAllByProductId(@Param("productId") Long productId);
+
 }

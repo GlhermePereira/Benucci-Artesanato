@@ -3,7 +3,9 @@ package br.edu.fatecpg.BenucciArtesanato.controller;
 import br.edu.fatecpg.BenucciArtesanato.model.Product;
 import br.edu.fatecpg.BenucciArtesanato.model.ProductImage;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductMapper;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.UpdateProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.service.ProductService;
 import br.edu.fatecpg.BenucciArtesanato.service.SupabaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,13 +31,22 @@ import java.util.List;
 @RequestMapping("/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
-    @Autowired
-    private SupabaseService supabaseService;
-@Autowired
-private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final ProductService productService;
+    private final SupabaseService supabaseService;
+    private final ObjectMapper objectMapper;
+    private final ProductMapper productMapper; // <--- campo
+
+    @Autowired
+    public ProductController(ProductService productService,
+                             SupabaseService supabaseService,
+                             ObjectMapper objectMapper,
+                             ProductMapper productMapper) {
+        this.productService = productService;
+        this.supabaseService = supabaseService;
+        this.objectMapper = objectMapper;
+        this.productMapper = productMapper; // <--- inicializa
+    }
     @Operation(summary = "Listar produtos com paginação", description = "Retorna uma lista paginada de produtos cadastrados.")
     @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductPageDTO.class)))
@@ -84,7 +96,6 @@ private final ObjectMapper objectMapper = new ObjectMapper();
         }
     }
 
-
     @Operation(summary = "Atualizar produto", description = "Atualiza um produto existente pelo ID (somente ADMIN).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso", content = @Content(schema = @Schema(implementation = ProductDTO.class))),
@@ -93,78 +104,28 @@ private final ObjectMapper objectMapper = new ObjectMapper();
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductDTO> updateProduct(
-            @Parameter(description = "ID do produto a ser atualizado", required = true)
             @PathVariable Long id,
-
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Dados do produto para atualização",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = ProductDTO.class))
-            )
-            @RequestPart("product") ProductDTO productDTO,  // agora multipart
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) BigDecimal price,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) Long subcategoryId,
+            @RequestParam(required = false) List<Long> themeIds,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
-        try {
-            Product updated = productService.updateProduct(id, productDTO, images);
+        UpdateProductDTO dto = new UpdateProductDTO();
+        dto.setName(name);
+        dto.setDescription(description);
+        dto.setPrice(price);
+        dto.setStock(stock);
+        dto.setSubcategoryId(subcategoryId);
+        dto.setThemeIds(themeIds);
 
-            ProductDTO responseDTO = toDTO(updated);
+        Product updated = productService.updateProduct(id, dto, images);
+        ProductDTO responseDTO = productMapper.toDTO(updated);
 
-            return ResponseEntity.ok(responseDTO);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).build();
-        }
+        return ResponseEntity.ok(responseDTO);
     }
-
-
-    public ProductDTO toDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-
-        dto.setId(product.getId());
-        dto.setName(product.getName());
-        dto.setDescription(product.getDescription());
-        dto.setPrice(product.getPrice());
-        dto.setStock(product.getStock());
-
-        dto.setSubcategoryId(product.getSubcategory().getId());
-        dto.setSubcategoryName(product.getSubcategory().getName());
-
-        dto.setCategoryId(product.getSubcategory().getCategory().getId());
-        dto.setCategoryName(product.getSubcategory().getCategory().getName());
-
-        // imagens
-        dto.setImageUrls(
-                product.getImages().stream()
-                        .map(ProductImage::getImageUrl)
-                        .toList()
-        );
-
-        if (!product.getImages().isEmpty()) {
-            ProductImage firstImage = product.getImages().iterator().next();
-        }
-
-        // themes
-        dto.setThemeIds(
-                product.getProductThemes().stream()
-                        .map(pt -> pt.getTheme().getId())
-                        .toList()
-        );
-
-        dto.setThemeNames(
-                product.getProductThemes().stream()
-                        .map(pt -> pt.getTheme().getName())
-                        .toList()
-        );
-
-        dto.setCreatedAt(product.getCreatedAt().toLocalDateTime());
-        dto.setUpdatedAt(product.getUpdatedAt().toLocalDateTime());
-
-        return dto;
-    }
-
-
 
 
     @Operation(summary = "Excluir produto", description = "Remove um produto pelo ID (somente ADMIN).")

@@ -3,6 +3,7 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 import br.edu.fatecpg.BenucciArtesanato.model.*;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ProductPageDTO;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.UpdateProductDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -135,34 +136,34 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(Long id, ProductDTO dto, List<MultipartFile> images) {
+    public Product updateProduct(Long id, UpdateProductDTO dto, List<MultipartFile> images) {
 
         // ----- 1) Buscar produto existente -----
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdFull(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
 
-        // ----- 2) Validar subcategoria -----
-        SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
 
-        // ----- 3) Atualizar campos básicos -----
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setStock(dto.getStock());
-        product.setSubcategory(subcategory);
+        // ----- 2) Atualizar campos básicos -----
+        if (dto.getName() != null) product.setName(dto.getName());
+        if (dto.getDescription() != null) product.setDescription(dto.getDescription());
+        if (dto.getPrice() != null) product.setPrice(dto.getPrice());
+        if (dto.getStock() != null) product.setStock(dto.getStock());
 
-        product = productRepository.save(product);
+        // ----- 3) Atualizar subcategoria -----
+        if (dto.getSubcategoryId() != null) {
+            SubCategory subcategory = SubcategoryRepository.findById(dto.getSubcategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subcategoria não encontrada"));
+            product.setSubcategory(subcategory);
+        }
 
-        // ----- 4) Atualizar themes -----
-        if (dto.getThemeIds() != null && !dto.getThemeIds().isEmpty()) {
+        // ----- 4) Atualizar temas (product_theme) -----
+        if (dto.getThemeIds() != null) {
+            // Apaga temas antigos
+            productThemeRepository.deleteAllByProductId(product.getId());
 
-            // buscar temas permitidos para a subcategoria
+            // Salva novos temas
             List<Long> allowedThemes = subcategoryThemeRepository
-                    .findThemeIdsBySubcategoryId(dto.getSubcategoryId());
-
-            // remover themes antigos
-            productThemeRepository.deleteByProductId(product.getId());
+                    .findThemeIdsBySubcategoryId(product.getSubcategory().getId());
 
             for (Long themeId : dto.getThemeIds()) {
                 if (!allowedThemes.contains(themeId)) {
@@ -178,36 +179,36 @@ public class ProductService {
             }
         }
 
-        // ----- 5) Atualizar imagens -----
+        // ----- 5) Atualizar imagens (product_image) -----
         if (images != null && !images.isEmpty()) {
+            // Apaga imagens antigas
+            productImageRepository.deleteAllByProductId(product.getId());
 
-            validateFiles(images); // valida arquivos
+            // Valida arquivos
+            validateFiles(images);
 
-            // remover imagens antigas do produto
-            productImageRepository.findByProductId(product.getId());
-
+            // Salva novas imagens
             for (MultipartFile file : images) {
                 byte[] processed;
                 try {
-                    processed = resizeImage(file); // redimensiona
+                    processed = resizeImage(file);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Erro ao processar a imagem " + file.getOriginalFilename(), e);
                 }
 
-                String imageUrl = supabaseService.uploadImage(
-                        file.getOriginalFilename(),
-                        processed
-                );
+                String imageUrl = supabaseService.uploadImage(file.getOriginalFilename(), processed);
 
                 ProductImage pi = new ProductImage();
                 pi.setImageUrl(imageUrl);
                 pi.setProduct(product);
                 productImageRepository.save(pi);
             }
+
         }
 
-        return product;
+        return productRepository.save(product);
     }
+
 
 
     private void validateFiles(List<MultipartFile> files) {

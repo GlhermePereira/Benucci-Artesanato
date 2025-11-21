@@ -4,10 +4,12 @@ import br.edu.fatecpg.BenucciArtesanato.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -43,4 +45,26 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "JOIN FETCH s.category c " +
             "LEFT JOIN FETCH s.themes t")
     List<Product> findAllWithSubcategoryAndThemes();
+
+    @Query("""
+       SELECT p FROM Product p
+       JOIN FETCH p.subcategory s
+       JOIN FETCH s.category
+       WHERE p.id = :id
+       """)
+    Optional<Product> findByIdWithCategory(@Param("id") Long id);
+
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.images WHERE p.id = :id")
+    Optional<Product> findByIdWithImages(@Param("id") Long id);
+    @Query("""
+       SELECT p FROM Product p
+       LEFT JOIN FETCH p.images
+       JOIN FETCH p.subcategory s
+       JOIN FETCH s.category
+       WHERE p.id = :id
+       """)
+    Optional<Product> findByIdFull(@Param("id") Long id);
+
+
+
 }
