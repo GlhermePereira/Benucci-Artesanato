@@ -22,6 +22,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+
 
 @Service
 public class ProductService {
@@ -42,15 +44,59 @@ public class ProductService {
     private ProductImageRepository productImageRepository;
     @Autowired
     private SubcategoryThemeRepository subcategoryThemeRepository;
-
-
     @Transactional(readOnly = true)
-    public List<ProductDTO> getAllDTO() {
-        List<Product> products = productRepository.findAll();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public ProductPageDTO getPaginatedProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        // Busca produtos com subcategoria e categoria, e carrega imagens e temas
+        Page<Product> productPage = productRepository.findAllPaginated(pageable);
+
+        List<ProductDTO> dtos = productPage.getContent().stream()
+                .map(product -> {
+                    ProductDTO dto = new ProductDTO();
+                    dto.setId(product.getId());
+                    dto.setName(product.getName());
+                    dto.setDescription(product.getDescription());
+                    dto.setPrice(product.getPrice());
+                    dto.setStock(product.getStock());
+
+                    // Primeira imagem
+                    dto.setMainImageUrl(
+                            product.getImages().stream()
+                                    .map(ProductImage::getImageUrl)
+                                    .findFirst()
+                                    .orElse(null)
+                    );
+
+                    // Subcategoria e categoria
+                    dto.setSubcategoryId(product.getSubcategory().getId());
+                    dto.setSubcategoryName(product.getSubcategory().getName());
+                    dto.setCategoryId(product.getSubcategory().getCategory().getId());
+                    dto.setCategoryName(product.getSubcategory().getCategory().getName());
+
+                    // Temas
+                    dto.setThemeIds(product.getThemeIds());
+                    dto.setThemeNames(product.getThemeNames());
+
+                    // Datas
+                    dto.setCreatedAt(product.getCreatedAt().toLocalDateTime());
+                    dto.setUpdatedAt(product.getUpdatedAt().toLocalDateTime());
+
+                    return dto;
+                })
+                .toList();
+
+        return new ProductPageDTO(
+                dtos,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalPages(),
+                productPage.getTotalElements()
+        );
     }
+
+
+
 
 
     @Transactional(readOnly = true)
@@ -349,23 +395,7 @@ public class ProductService {
         }
         return isThumbnailSupported;
     }
-    @Transactional(readOnly = true)
-    public ProductPageDTO getPaginatedProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Product> productPage = productRepository.findAllWithDetails(pageable);
 
-        List<ProductDTO> dtos = productPage.getContent().stream()
-                .map(this::convertToDTO)
-                .toList();
-
-        return new ProductPageDTO(
-                dtos,
-                productPage.getNumber(),
-                productPage.getSize(),
-                productPage.getTotalPages(),
-                productPage.getTotalElements()
-        );
-    }
 
 
 

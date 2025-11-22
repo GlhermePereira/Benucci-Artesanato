@@ -68,6 +68,23 @@ WHERE p.id = :id
 """)
     Optional<Product> findByIdFull(@Param("id") Long id);
 
+    @Query("""
+SELECT p 
+FROM Product p
+JOIN FETCH p.subcategory s
+JOIN FETCH s.category c
+LEFT JOIN FETCH p.images i
+WHERE i.id IN (
+    SELECT MIN(pi.id)
+    FROM ProductImage pi
+    WHERE pi.product = p
+)
+ORDER BY p.id
+""")
+    Page<Product> findAllPaginated(Pageable pageable);
+
+
+
 
 
 

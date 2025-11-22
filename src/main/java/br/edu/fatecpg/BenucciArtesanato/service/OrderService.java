@@ -1,9 +1,6 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
-import br.edu.fatecpg.BenucciArtesanato.model.Order;
-import br.edu.fatecpg.BenucciArtesanato.model.OrderItem;
-import br.edu.fatecpg.BenucciArtesanato.model.Product;
-import br.edu.fatecpg.BenucciArtesanato.model.User;
+import br.edu.fatecpg.BenucciArtesanato.model.*;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderItemDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderRequestDTO;
@@ -40,29 +37,42 @@ public class OrderService {
         order.setDeliveryAddress(dto.getDeliveryAddress());
 
         BigDecimal total = BigDecimal.ZERO;
-
         for (OrderRequestDTO.ItemDTO itemDTO : dto.getItems()) {
             Product product = productRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + itemDTO.getProductId()));
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProduct(product);
-            orderItem.setProductName(product.getName());
-            orderItem.setUnitPrice(product.getPrice());
-            orderItem.setQuantity(itemDTO.getQuantity());
+            // Criar OrderItem
+            OrderItem orderItem = getOrderItem(itemDTO, product, order);
 
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
             order.getItems().add(orderItem);
         }
+
 
         order.setTotalAmount(total);
 
         return orderRepository.save(order);
     }
 
-    public Order updateOrder(Order order) {
-        return orderRepository.save(order);
+    private static OrderItem getOrderItem(OrderRequestDTO.ItemDTO itemDTO, Product product, Order order) {
+        OrderItem orderItem = new OrderItem();
+
+        // Cria a chave composta
+        OrderItemId orderItemId = new OrderItemId();
+        orderItemId.setProductId(product.getId());
+        // orderId será preenchido pelo Hibernate via @MapsId("orderId")
+        orderItem.setId(orderItemId);
+
+        orderItem.setOrder(order);           // @MapsId("orderId") preenche orderId na PK
+        orderItem.setProduct(product);       // @MapsId("productId") preenche productId na PK
+        orderItem.setProductName(product.getName());
+        orderItem.setUnitPrice(product.getPrice());
+        orderItem.setQuantity(itemDTO.getQuantity());
+        return orderItem;
+    }
+
+    public void updateOrder(Order order) {
+        orderRepository.save(order);
     }
 
     @Transactional(readOnly = true)
