@@ -3,6 +3,7 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 import br.edu.fatecpg.BenucciArtesanato.model.Order;
 import br.edu.fatecpg.BenucciArtesanato.model.OrderItem;
 import br.edu.fatecpg.BenucciArtesanato.model.Payment;
+import br.edu.fatecpg.BenucciArtesanato.record.dto.PaymentResponseDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -17,10 +18,14 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final WebClient mercadoPagoWebClient;
-    private final OrderService orderService; // 👈 injete o OrderService aqui
-    public Payment createPayment(Order order) {
+    private final OrderService orderService;
+
+    /**
+     * Cria pagamento para uma Order (entidade) e retorna PaymentResponseDTO
+     */
+    public PaymentResponseDTO createPayment(Order order) {
         try {
-            // Monta lista de itens
+            // Monta lista de itens a partir da entidade Order
             List<Map<String, Object>> itemsList = new ArrayList<>();
             for (OrderItem item : order.getItems()) {
                 Map<String, Object> itemMap = new HashMap<>();
@@ -32,7 +37,7 @@ public class PaymentService {
                 itemsList.add(itemMap);
             }
 
-            // Monta request
+            // Corpo da requisição Mercado Pago
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("items", itemsList);
             requestBody.put("back_urls", Map.of(
@@ -44,7 +49,7 @@ public class PaymentService {
             requestBody.put("binary_mode", true);
             requestBody.put("external_reference", order.getId().toString());
 
-            // Chamada à API Mercado Pago
+            // Chamada Mercado Pago
             Map<String, Object> response = mercadoPagoWebClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
@@ -52,11 +57,12 @@ public class PaymentService {
                     .bodyToMono(Map.class)
                     .block();
 
-            // Cria Payment
+            // Cria Payment e associa à Order
             Payment payment = new Payment();
             payment.setOrder(order);
             payment.setAmount(order.getTotalAmount());
             payment.setStatus("pending");
+            payment.setPaymentMethod("Mercado Pago"); // ou do pedido
 
             if (response != null) {
                 payment.setMpPreferenceId(String.valueOf(response.get("id")));
@@ -66,12 +72,18 @@ public class PaymentService {
 
             Payment savedPayment = paymentRepository.save(payment);
 
-// Atualiza Order com mpPreferenceId
+            // Atualiza Order com mpPreferenceId
             order.setMpPreferenceId(savedPayment.getMpPreferenceId());
-            orderService.updateOrder(order); // ✅ correto
+            orderService.updateOrderStatus(order.getId(), order.getStatus().name()); // mantém método existente
 
-            return savedPayment;
-
+            // Retorna DTO
+            return new PaymentResponseDTO(
+                    savedPayment.getMpPreferenceId(),
+                    savedPayment.getAmount(),
+                    savedPayment.getStatus(),
+                    savedPayment.getInitPoint(),
+                    savedPayment.getSandboxLink()
+            );
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao criar preferência de pagamento: " + e.getMessage(), e);

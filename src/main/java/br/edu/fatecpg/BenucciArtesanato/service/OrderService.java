@@ -2,7 +2,6 @@ package br.edu.fatecpg.BenucciArtesanato.service;
 
 import br.edu.fatecpg.BenucciArtesanato.model.*;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderDTO;
-import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderItemDTO;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.OrderRequestDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.OrderRepository;
 import br.edu.fatecpg.BenucciArtesanato.repository.ProductRepository;
@@ -12,129 +11,151 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
-    public Order createOrder(OrderRequestDTO dto) {
-        Order order = new Order();
-
-        // Buscar usuário pelo ID
-        User user = userRepository.findById(dto.getUserId())
+    /**
+     * Cria a entidade Order (para uso interno, ex: pagamento)
+     */
+    @Transactional
+    public Order createOrderEntity(OrderRequestDTO request) {
+        User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        order.setUser(user);
 
-        // Status inicial
+        Order order = new Order();
+        order.setUser(user);
+        order.setDeliveryType(request.getDeliveryType());
+        order.setDeliveryAddress(request.getDeliveryAddress());
         order.setStatus(Order.OrderStatus.pending);
 
-        order.setDeliveryType(dto.getDeliveryType());
-        order.setDeliveryAddress(dto.getDeliveryAddress());
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
-        BigDecimal total = BigDecimal.ZERO;
-        for (OrderRequestDTO.ItemDTO itemDTO : dto.getItems()) {
+        List<OrderItem> items = new ArrayList<>();
+        for (OrderRequestDTO.ItemDTO itemDTO : request.getItems()) {
             Product product = productRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + itemDTO.getProductId()));
 
-            // Criar OrderItem
-            OrderItem orderItem = getOrderItem(itemDTO, product, order);
+            if (product.getStock() < itemDTO.getQuantity()) {
+                throw new RuntimeException("Estoque insuficiente para o produto: " + product.getName());
+            }
 
-            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
-            order.getItems().add(orderItem);
+            // cria ID composto
+            OrderItemId itemId = new OrderItemId();
+            // ID de Order será gerado pelo Hibernate, então só vinculamos depois do save
+            OrderItem item = new OrderItem();
+            item.setProduct(product);
+            item.setProductName(product.getName());
+            item.setUnitPrice(product.getPrice());
+            item.setQuantity(itemDTO.getQuantity());
+
+            items.add(item);
+
+            // atualiza estoque
+            product.setStock(product.getStock() - itemDTO.getQuantity());
+            productRepository.save(product);
+
+            totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
         }
 
+        order.setItems(items);
+        for (OrderItem item : items) {
+            item.setOrder(order);
+            // define o ID composto se necessário após o order ter ID
+            OrderItemId id = new OrderItemId();
+            id.setOrderId(order.getId()); // Hibernate preencherá na persistência
+            id.setProductId(item.getProduct().getId());
+            item.setId(id);
+        }
 
-        order.setTotalAmount(total);
+        order.setTotalAmount(totalAmount);
 
         return orderRepository.save(order);
     }
 
+
     private static OrderItem getOrderItem(OrderRequestDTO.ItemDTO itemDTO, Product product, Order order) {
-        OrderItem orderItem = new OrderItem();
+        if (product.getStock() < itemDTO.getQuantity()) {
+            throw new RuntimeException("Estoque insuficiente para o produto: " + product.getName());
+        }
 
-        // Cria a chave composta
-        OrderItemId orderItemId = new OrderItemId();
-        orderItemId.setProductId(product.getId());
-        // orderId será preenchido pelo Hibernate via @MapsId("orderId")
-        orderItem.setId(orderItemId);
+        // Cria o ID composto
+        OrderItemId itemId = new OrderItemId();
+        itemId.setOrderId(order.getId());
+        itemId.setProductId(product.getId());
 
-        orderItem.setOrder(order);           // @MapsId("orderId") preenche orderId na PK
-        orderItem.setProduct(product);       // @MapsId("productId") preenche productId na PK
-        orderItem.setProductName(product.getName());
-        orderItem.setUnitPrice(product.getPrice());
-        orderItem.setQuantity(itemDTO.getQuantity());
-        return orderItem;
+        OrderItem item = new OrderItem();
+        item.setId(itemId);
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setProductName(product.getName());
+        item.setUnitPrice(product.getPrice());
+        item.setQuantity(itemDTO.getQuantity());
+        return item;
     }
 
-    public void updateOrder(Order order) {
-        orderRepository.save(order);
+
+    /**
+     * Cria um pedido e retorna o DTO (para controller)
+     */
+    @Transactional
+    public OrderDTO createOrder(OrderRequestDTO request) {
+        Order order = createOrderEntity(request); // usa o método de entidade
+        return mapToDTO(order);
     }
 
     @Transactional(readOnly = true)
-    public OrderDTO getOrderDetails(Long id) {
+    public OrderDTO getOrderById(Long id) {
         Order order = orderRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+        return mapToDTO(order);
+    }
 
+    @Transactional(readOnly = true)
+    public List<OrderDTO> getOrdersByUser(Long userId) {
+        List<Order> orders = orderRepository.findByUserIdWithItems(userId);
+        return orders.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public OrderDTO updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+
+        order.setStatus(Order.OrderStatus.fromString(status));
+        order.setUpdatedAt(OffsetDateTime.now());
+
+        return mapToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Converte a entidade Order em OrderDTO
+     */
+    private OrderDTO mapToDTO(Order order) {
         return OrderDTO.builder()
                 .id(order.getId())
                 .orderDate(order.getCreatedAt().toLocalDateTime())
                 .totalAmount(order.getTotalAmount())
-                .status(order.getStatus().name()) // retorna como String
+                .deliveryType(order.getDeliveryType())
+                .deliveryAddress(order.getDeliveryAddress())
+                .status(order.getStatus().name())
                 .items(order.getItems().stream().map(item ->
-                        OrderItemDTO.builder()
-                                .productId(item.getProduct().getId())
-                                .productName(item.getProductName())
-                                .quantity(item.getQuantity())
-                                .unitPrice(item.getUnitPrice())
-                                .build()
+                        new br.edu.fatecpg.BenucciArtesanato.record.dto.OrderItemDTO(
+                                item.getProduct().getId(),
+                                item.getProductName(),
+                                item.getQuantity(),
+                                item.getUnitPrice()
+                        )
                 ).collect(Collectors.toList()))
                 .build();
-    }
-
-    @Transactional(readOnly = true)
-    public List<OrderDTO> getUserOrders(Long userId) {
-        List<Order> orders = orderRepository.findByUserIdWithItems(userId);
-
-        return orders.stream().map(order ->
-                OrderDTO.builder()
-                        .id(order.getId())
-                        .orderDate(order.getCreatedAt().toLocalDateTime())
-                        .totalAmount(order.getTotalAmount())
-                        .status(order.getStatus().name())
-                        .deliveryType(order.getDeliveryType())
-                        .deliveryAddress(order.getDeliveryAddress())
-                        .items(order.getItems().stream().map(item ->
-                                OrderItemDTO.builder()
-                                        .productId(item.getProduct().getId())
-                                        .productName(item.getProductName())
-                                        .quantity(item.getQuantity())
-                                        .unitPrice(item.getUnitPrice())
-                                        .build()
-                        ).toList())
-                        .build()
-        ).toList();
-    }
-
-    public OrderDTO updateOrderStatus(Long orderId, String statusStr) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
-
-        // Converte String para Enum usando o método seguro
-        Order.OrderStatus status;
-        try {
-            status = Order.OrderStatus.fromString(statusStr);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Status inválido: " + statusStr);
-        }
-
-        order.setStatus(status);
-        orderRepository.save(order);
-
-        return getOrderDetails(orderId);
     }
 }

@@ -67,6 +67,17 @@ public class Order {
             optional = true
     )
     private Payment payment;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+
 
     public enum OrderStatus {
         pending, preparing, shipped, delivered, canceled;
