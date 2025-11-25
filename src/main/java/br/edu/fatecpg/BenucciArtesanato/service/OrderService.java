@@ -81,6 +81,18 @@ public class OrderService {
 
         return orderRepository.save(order);
     }
+    @Transactional
+    public void updateOrderStatusByMpPreferenceId(String mpPreferenceId, String status) {
+        Order order = orderRepository.findByMpPreferenceId(mpPreferenceId)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado para mpPreferenceId: " + mpPreferenceId));
+
+        order.setStatus(Order.OrderStatus.fromString(status));
+        order.setUpdatedAt(OffsetDateTime.now());
+
+        orderRepository.save(order);
+    }
+
+
 
 
     private static OrderItem getOrderItem(OrderRequestDTO.ItemDTO itemDTO, Product product, Order order) {

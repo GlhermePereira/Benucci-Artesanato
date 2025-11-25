@@ -16,6 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LEFT JOIN FETCH i.product " +
             "WHERE o.id = :id")
     Optional<Order> findByIdWithItems(@Param("id") Long id);
+    Optional<Order> findByMpPreferenceId(String mpPreferenceId);
 
     // Histórico do usuário (com itens)
     @Query("SELECT DISTINCT o FROM Order o " +
