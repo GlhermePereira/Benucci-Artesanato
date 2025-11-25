@@ -45,4 +45,10 @@ public class WebHookController {
 
         return ResponseEntity.ok("Webhook recebido com sucesso");
     }
+    @PostMapping("/mercadopago-teste")
+    public ResponseEntity<String> receivePaymentUpdate(@RequestBody Map<String, Object> payload) {
+        System.out.println("Recebi webhook: " + payload);
+        // Aqui você processa o pagamento e atualiza o pedido
+        return ResponseEntity.ok("OK");
+    }
 }
