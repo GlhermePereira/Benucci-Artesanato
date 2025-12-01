@@ -3,6 +3,7 @@ package br.edu.fatecpg.BenucciArtesanato.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 @Entity
 @Table(name = "payment")
@@ -26,6 +27,8 @@ public class Payment {
 
     @Column(name = "mp_preference_id")
     private String mpPreferenceId;
+    @Column(name = "mp_payment_id")
+    private String mpPaymentId;
 
     @Column(nullable = false)
     private String status;

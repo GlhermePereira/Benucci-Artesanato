@@ -66,14 +66,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
 
+                        .requestMatchers("/webhook/mercadopago-teste").permitAll()
+                        .requestMatchers("/webhook/mercadopago**").permitAll()
+                        .requestMatchers("/webhook/**").authenticated() // outros webhooks protegidos
                         // Pedidos — precisa estar logado
                         .requestMatchers("/orders/**").authenticated()
                         .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/webhook/**").authenticated()
+                        .requestMatchers("/webhook/mercadopago/**").authenticated()
+
 
                         // Qualquer outra requisição — requer autenticação
                         .anyRequest().authenticated()
                 )
-                // 🔥 CRÍTICO: Adiciona o filtro JWT ANTES do filtro de autenticação padrão
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -95,7 +100,8 @@ public class SecurityConfig {
                 "http://192.168.1.198:8081",
                 "exp://192.168.1.198:8081",
                 "http://192.168.15.34:8080",
-                "https://e4922bed57f3.ngrok-free.app",
+                "https://42a68c0bffed.ngrok-free.app/webhook/mercadopago-teste",
+                "https://42a68c0bffed.ngrok-free.app",
                 "http://192.168.15.34:8080",
                 "http://localhost:8081", // React Native rodando local
                 "exp://192.168.15.34:8081", // Expo Go (se usar em celular)

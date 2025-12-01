@@ -6,6 +6,7 @@ import br.edu.fatecpg.BenucciArtesanato.model.Payment;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.PaymentResponseDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,22 +15,31 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final WebClient mercadoPagoWebClient;
-    private final OrderService orderService;
+
+    // URL pública onde o Mercado Pago irá chamar o webhook
+    private static final String NOTIFICATION_URL =
+            "https://benucci-artesanato.onrender.com/webhook/mercadopago";
 
     /**
-     * Cria pagamento para uma Order (entidade) e retorna PaymentResponseDTO
+     * Cria uma preferência de pagamento no Mercado Pago.
+     * O pagamento ainda não existe, portanto mp_payment_id = null
      */
     public PaymentResponseDTO createPayment(Order order) {
         try {
-            // Monta lista de itens a partir da entidade Order
+
+            // ----------------------------------------------------
+            // 1. Montagem dos itens da preferência
+            // ----------------------------------------------------
             List<Map<String, Object>> itemsList = new ArrayList<>();
+
             for (OrderItem item : order.getItems()) {
                 Map<String, Object> itemMap = new HashMap<>();
-                itemMap.put("id", item.getId().toString());
+                itemMap.put("id", item.getProduct().getId().toString());
                 itemMap.put("title", item.getProductName());
                 itemMap.put("quantity", item.getQuantity());
                 itemMap.put("unit_price", item.getUnitPrice());
@@ -37,19 +47,28 @@ public class PaymentService {
                 itemsList.add(itemMap);
             }
 
-            // Corpo da requisição Mercado Pago
+            // ----------------------------------------------------
+            // 2. Corpo da requisição para criar preferência
+            // (AQUI adicionamos notification_url)
+            // ----------------------------------------------------
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("items", itemsList);
+            requestBody.put("external_reference", order.getId().toString());
+            requestBody.put("binary_mode", true);
+            requestBody.put("auto_return", "all");
+
+            // URL obrigatória para disparo do webhook
+            requestBody.put("notification_url", NOTIFICATION_URL);
+
             requestBody.put("back_urls", Map.of(
                     "success", "https://yourapp.com/success",
                     "failure", "https://yourapp.com/failure",
                     "pending", "https://yourapp.com/pending"
             ));
-            requestBody.put("auto_return", "all");
-            requestBody.put("binary_mode", true);
-            requestBody.put("external_reference", order.getId().toString());
 
-            // Chamada Mercado Pago
+            // ----------------------------------------------------
+            // 3. Chamada ao Mercado Pago
+            // ----------------------------------------------------
             Map<String, Object> response = mercadoPagoWebClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
@@ -57,26 +76,51 @@ public class PaymentService {
                     .bodyToMono(Map.class)
                     .block();
 
-            // Cria Payment e associa à Order
+            log.info("Resposta Mercado Pago: {}", response);
+
+            if (response == null) {
+                throw new IllegalStateException("Resposta nula do Mercado Pago.");
+            }
+
+            // ----------------------------------------------------
+            // 4. Captura preference_id retornado
+            // ----------------------------------------------------
+            String preferenceId =
+                    Objects.toString(response.get("id"), null);
+
+            if (preferenceId == null) {
+                throw new IllegalStateException("Mercado Pago não retornou preference_id.");
+            }
+
+            // ----------------------------------------------------
+            // 5. Cria e salva o pagamento no banco
+            // ----------------------------------------------------
             Payment payment = new Payment();
             payment.setOrder(order);
             payment.setAmount(order.getTotalAmount());
             payment.setStatus("pending");
-            payment.setPaymentMethod("Mercado Pago"); // ou do pedido
+            payment.setPaymentMethod("Mercado Pago");
+            payment.setMpPreferenceId(preferenceId);
 
-            if (response != null) {
-                payment.setMpPreferenceId(String.valueOf(response.get("id")));
-                payment.setInitPoint(String.valueOf(response.get("init_point")));
-                payment.setSandboxLink(String.valueOf(response.get("sandbox_init_point")));
-            }
+            payment.setMpPaymentId(null); // pagamento ainda não existe
+
+            payment.setInitPoint(
+                    response.get("init_point") != null ?
+                            response.get("init_point").toString() :
+                            null
+            );
+
+            payment.setSandboxLink(
+                    response.get("sandbox_init_point") != null ?
+                            response.get("sandbox_init_point").toString() :
+                            null
+            );
 
             Payment savedPayment = paymentRepository.save(payment);
 
-            // Atualiza Order com mpPreferenceId
-            order.setMpPreferenceId(savedPayment.getMpPreferenceId());
-            orderService.updateOrderStatus(order.getId(), order.getStatus().name()); // mantém método existente
-
-            // Retorna DTO
+            // ----------------------------------------------------
+            // 6. Retorno DTO
+            // ----------------------------------------------------
             return new PaymentResponseDTO(
                     savedPayment.getMpPreferenceId(),
                     savedPayment.getAmount(),
@@ -86,6 +130,7 @@ public class PaymentService {
             );
 
         } catch (Exception e) {
+            log.error("Erro ao criar preferência de pagamento", e);
             throw new RuntimeException("Erro ao criar preferência de pagamento: " + e.getMessage(), e);
         }
     }

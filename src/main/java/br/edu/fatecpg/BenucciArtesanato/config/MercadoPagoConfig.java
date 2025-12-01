@@ -19,6 +19,8 @@ public class MercadoPagoConfig {
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + accessToken)
+                .defaultHeader("Content-Type", "application/json")
                 .build();
     }
+
 }
