@@ -66,8 +66,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
 
-                        .requestMatchers("/webhook/mercadopago-teste").permitAll()
-                        .requestMatchers("/webhook/mercadopago**").permitAll()
+                        .requestMatchers("/webhook/mercadopago").permitAll()
+                        .requestMatchers("/webhook/mercadopago/**").permitAll()
+
                         .requestMatchers("/webhook/**").authenticated() // outros webhooks protegidos
                         // Pedidos — precisa estar logado
                         .requestMatchers("/orders/**").authenticated()
