@@ -40,12 +40,15 @@ public class PaymentService {
             // Corpo da requisição Mercado Pago
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("items", itemsList);
+            // Configura URLs de retorno para Deep Linking do App
+            // O esquema deve corresponder ao configurado no app.json (benucci-artesanato)
+            String appScheme = "benucci-artesanato://";
             requestBody.put("back_urls", Map.of(
-                    "success", "https://yourapp.com/success",
-                    "failure", "https://yourapp.com/failure",
-                    "pending", "https://yourapp.com/pending"
+                    "success", appScheme + "success",
+                    "failure", appScheme + "failure",
+                    "pending", appScheme + "pending"
             ));
-            requestBody.put("auto_return", "all");
+            requestBody.put("auto_return", "approved"); // Retorna automaticamente apenas se aprovado
             requestBody.put("binary_mode", true);
             requestBody.put("external_reference", order.getId().toString());
 
