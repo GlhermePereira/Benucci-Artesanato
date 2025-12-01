@@ -14,8 +14,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -30,75 +32,97 @@ public class PaymentWebhookService {
         log.info("=== PROCESSANDO WEBHOOK MERCADO PAGO ===");
 
         try {
-            String action = (body.get("action") != null) ? body.get("action").toString() : "n/a";
-            String type = (body.get("type") != null) ? body.get("type").toString() : "n/a";
+            String action = Objects.toString(body.get("action"), "n/a");
+            String type = Objects.toString(body.get("type"), "n/a");
 
-            Map<String, Object> data;
-            if (body.get("data") instanceof Map) {
-                data = (Map<String, Object>) body.get("data");
-            } else data = null;
+            Map<String, Object> data = (body.get("data") instanceof Map)
+                    ? (Map<String, Object>) body.get("data")
+                    : null;
 
-            if (data == null || data.get("id") == null ) {
+            if (data == null || data.get("id") == null) {
                 log.warn("Webhook recebido sem data.id");
                 return;
             }
 
-        String mpPaymentId = data.get("id").toString();
-            log.info("Webhook: action={}, type={}, payment_id={}", action, type, mpPaymentId);
+            String mpPaymentId = Objects.toString(data.get("id"), null);
 
-            Map<String, Object> mpResponse;
-            mpResponse = mercadoPagoWebClient
+            log.info("Webhook recebido: action={}, type={}, mp_payment_id={}", action, type, mpPaymentId);
+
+            // --------------------------------------------------------------------
+            // CONSULTA COMPLETA NA API DO MERCADO PAGO
+            // --------------------------------------------------------------------
+            Map<String, Object> mpResponse = mercadoPagoWebClient
                     .get()
                     .uri("/v1/payments/" + mpPaymentId)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
 
-            if (mpResponse == null ) {
-                log.error("API do Mercado Pago retornou null ao consultar pagamento {}", mpPaymentId);
+            if (mpResponse == null) {
+                log.error("API do MP retornou null ao consultar pagamento {}", mpPaymentId);
                 return;
             }
-            log.info("Detalhes do pagamento recebidos do MP: {}", mpResponse);
 
-            String status = (mpResponse.get("status") != null) ? mpResponse.get("status").toString() : "unknown";
-            String preferenceId = (mpResponse.get("preference_id") != null)
-                    ? mpResponse.get("preference_id").toString()
-                    : null;
+            log.info("MP response: {}", mpResponse);
 
+            // --------------------------------------------------------------------
+            // LÊ CAMPOS COMO STRINGS (MP ENVIA TUDO COMO STRING)
+            // --------------------------------------------------------------------
+            String status = Objects.toString(mpResponse.get("status"), "unknown");
+            String preferenceId = Objects.toString(mpResponse.get("preference_id"), null);
+            String externalReference = Objects.toString(mpResponse.get("external_reference"), null);
+            String transactionAmountStr = Objects.toString(mpResponse.get("transaction_amount"), null);
 
-            Optional<Payment> optionalPayment = Optional.empty();
-
-            if (preferenceId != null) {
-                optionalPayment = paymentRepository.findByMpPreferenceId(preferenceId);
+            // converter amount
+            BigDecimal amount = null;
+            if (transactionAmountStr != null) {
+                try {
+                    amount = new BigDecimal(transactionAmountStr);
+                } catch (Exception e) {
+                    log.warn("Falha ao converter transaction_amount={}", transactionAmountStr);
                 }
-            if (optionalPayment.isEmpty()) {
-                log.warn("Nenhum pagamento encontrado no banco para preference_id={}. Tentando por mp_payment_id...", preferenceId);
-                optionalPayment = paymentRepository.findByMpPaymentId(mpPaymentId);
             }
 
+            // --------------------------------------------------------------------
+            // BUSCA O PAGAMENTO NO BANCO
+            // SEM mp_payment_id — APENAS preference_id
+            // --------------------------------------------------------------------
+            if (preferenceId == null) {
+                log.error("MP não enviou preference_id, impossível relacionar pagamento.");
+                return;
+            }
+
+            Optional<Payment> optionalPayment = paymentRepository.findByMpPreferenceId(preferenceId);
+
             if (optionalPayment.isEmpty()) {
-                log.error("Pagamento NÃO encontrado no banco para preference_id={} ou mp_payment_id={}", preferenceId, mpPaymentId);
+                log.error("Nenhum Payment encontrado para preference_id={}", preferenceId);
                 return;
             }
 
             Payment payment = optionalPayment.get();
 
-            // ----------------------------------------------------
-            // 4. Atualizar dados do pagamento no banco
-            // ----------------------------------------------------
-            payment.setMpPaymentId(mpPaymentId);
+            // --------------------------------------------------------------------
+            // ATUALIZAÇÃO DOS DADOS EXISTENTES NO BANCO
+            // --------------------------------------------------------------------
             payment.setStatus(status);
+
+            if (amount != null) {
+                payment.setAmount(amount);
+            }
 
             paymentRepository.save(payment);
 
-            log.info("Pagamento atualizado com sucesso! id={}, status={}", payment.getId(), payment.getStatus());
-            log.info("=== FINALIZADO WEBHOOK ===");
+            log.info("Pagamento atualizado: id={}, status={}, amount={}",
+                    payment.getId(),
+                    payment.getStatus(),
+                    payment.getAmount()
+            );
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook do Mercado Pago", e);
+            log.error("Erro ao processar webhook MP", e);
         }
 
-
-
+        log.info("=== FINALIZADO ===");
     }
+
 }
