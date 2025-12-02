@@ -26,6 +26,7 @@ public class PaymentWebhookService {
 
     private final PaymentRepository paymentRepository;
     private final WebClient mercadoPagoWebClient;
+    private final WebClient mercadoPagoPaymentWebClient; // Injetado do config
 
     private static final String MP_ACCESS_TOKEN =
             "APP_USR-7329173875972159-120123-c8e1fc25840c193bbf8acf2550bbcdd4-3032944549";
@@ -50,12 +51,15 @@ public class PaymentWebhookService {
             log.info("Webhook recebido para payment ID={}", mpPaymentId);
 
             // Consulta status do pagamento no Mercado Pago
-            Map<String, Object> mpResponse = mercadoPagoWebClient.get()
+            Map<String, Object> mpResponse = mercadoPagoPaymentWebClient.get()
                     .uri("/v1/payments/{id}", mpPaymentId)
-                    .header("Authorization", "Bearer " + MP_ACCESS_TOKEN)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
+
+
+
+
 
             if (mpResponse == null) {
                 log.error("MP retornou null para payment {}", mpPaymentId);
@@ -93,5 +97,7 @@ public class PaymentWebhookService {
         log.info("=== FINALIZADO ===");
     }
 }
+
+
 
 
