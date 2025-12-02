@@ -11,21 +11,10 @@ public class MercadoPagoConfig {
     @Value("${mercadopago.access-token}")
     private String accessToken;
 
-    // WebClient para consultar pagamentos (usado no webhook)
     @Bean
-    public WebClient mercadoPagoPaymentWebClient() {
+    public WebClient mercadoPagoWebClient() {
         return WebClient.builder()
-                .baseUrl("https://api.mercadopago.com") // base geral da API
-                .defaultHeader("Authorization", "Bearer " + accessToken)
-                .defaultHeader("Content-Type", "application/json")
-                .build();
-    }
-
-    // WebClient para criar preferências de pagamento
-    @Bean
-    public WebClient mercadoPagoPreferenceWebClient() {
-        return WebClient.builder()
-                .baseUrl("https://api.mercadopago.com/checkout/preferences") // endpoint de preferências
+                .baseUrl("https://api.mercadopago.com")
                 .defaultHeader("Authorization", "Bearer " + accessToken)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
