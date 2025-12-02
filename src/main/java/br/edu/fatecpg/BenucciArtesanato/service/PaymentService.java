@@ -29,8 +29,6 @@ public class PaymentService {
     private static final String MP_ACCESS_TOKEN =
             "APP_USR-7329173875972159-120123-c8e1fc25840c193bbf8acf2550bbcdd4-3032944549";
 
-    private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
     public PaymentResponseDTO createPayment(Order order) {
         try {
@@ -51,6 +49,8 @@ public class PaymentService {
             // 5. Montagem do corpo da requisição
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("items", itemsList);
+            log.info("Order ID: {}", order.getId());
+
             requestBody.put("external_reference", order.getId().toString());
             requestBody.put("binary_mode", false);
             requestBody.put("notification_url", NOTIFICATION_URL);
@@ -58,7 +58,7 @@ public class PaymentService {
 
             // 6. Chamada ao Mercado Pago
             Map<String, Object> response = mercadoPagoWebClient.post()
-                    .uri("/checkout/preferences")
+                    .uri("")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + MP_ACCESS_TOKEN)
                     .bodyValue(requestBody)
