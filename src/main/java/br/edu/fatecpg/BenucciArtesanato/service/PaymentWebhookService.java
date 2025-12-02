@@ -19,110 +19,79 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentWebhookService {
+
     private final PaymentRepository paymentRepository;
     private final WebClient mercadoPagoWebClient;
 
+    private static final String MP_ACCESS_TOKEN =
+            "APP_USR-7329173875972159-120123-c8e1fc25840c193bbf8acf2550bbcdd4-3032944549";
 
     public void processWebHook(Map<String, Object> body) {
         log.info("=== PROCESSANDO WEBHOOK MERCADO PAGO ===");
 
         try {
-            String action = Objects.toString(body.get("action"), "n/a");
             String type = Objects.toString(body.get("type"), "n/a");
+            if (!"payment".equals(type)) {
+                log.info("Webhook ignorado (não é payment): {}", type);
+                return;
+            }
 
-            Map<String, Object> data = (body.get("data") instanceof Map)
-                    ? (Map<String, Object>) body.get("data")
-                    : null;
-
+            Map<String, Object> data = (Map<String, Object>) body.get("data");
             if (data == null || data.get("id") == null) {
                 log.warn("Webhook recebido sem data.id");
                 return;
             }
 
-            String mpPaymentId = Objects.toString(data.get("id"), null);
+            String mpPaymentId = Objects.toString(data.get("id"));
+            log.info("Webhook recebido para payment ID={}", mpPaymentId);
 
-            log.info("Webhook recebido: action={}, type={}, mp_payment_id={}", action, type, mpPaymentId);
-
-            // --------------------------------------------------------------------
-            // CONSULTA COMPLETA NA API DO MERCADO PAGO
-            // --------------------------------------------------------------------
-            Map<String, Object> mpResponse = mercadoPagoWebClient
-                    .get()
-                    .uri("/v1/payments/" + mpPaymentId)
+            // Consulta status do pagamento no Mercado Pago
+            Map<String, Object> mpResponse = mercadoPagoWebClient.get()
+                    .uri("/v1/payments/{id}", mpPaymentId)
+                    .header("Authorization", "Bearer " + MP_ACCESS_TOKEN)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
 
             if (mpResponse == null) {
-                log.error("API do MP retornou null ao consultar pagamento {}", mpPaymentId);
+                log.error("MP retornou null para payment {}", mpPaymentId);
                 return;
             }
 
-            log.info("MP response: {}", mpResponse);
-
-            // --------------------------------------------------------------------
-            // LÊ CAMPOS COMO STRINGS (MP ENVIA TUDO COMO STRING)
-            // --------------------------------------------------------------------
             String status = Objects.toString(mpResponse.get("status"), "unknown");
-            String preferenceId = Objects.toString(mpResponse.get("preference_id"), null);
-            String externalReference = Objects.toString(mpResponse.get("external_reference"), null);
-            String transactionAmountStr = Objects.toString(mpResponse.get("transaction_amount"), null);
+            String statusDetail = Objects.toString(mpResponse.get("status_detail"), "");
+            String preferenceId = Objects.toString(mpResponse.get("preference_id"));
 
-            // converter amount
-            BigDecimal amount = null;
-            if (transactionAmountStr != null) {
-                try {
-                    amount = new BigDecimal(transactionAmountStr);
-                } catch (Exception e) {
-                    log.warn("Falha ao converter transaction_amount={}", transactionAmountStr);
-                }
+            // Busca Payment no banco
+            Optional<Payment> optionalPayment = paymentRepository.findByMpPaymentId(mpPaymentId);
+            if (optionalPayment.isEmpty() && preferenceId != null) {
+                optionalPayment = paymentRepository.findByMpPreferenceId(preferenceId);
             }
-
-            // --------------------------------------------------------------------
-            // BUSCA O PAGAMENTO NO BANCO
-            // SEM mp_payment_id — APENAS preference_id
-            // --------------------------------------------------------------------
-            if (preferenceId == null) {
-                log.error("MP não enviou preference_id, impossível relacionar pagamento.");
-                return;
-            }
-
-            Optional<Payment> optionalPayment = paymentRepository.findByMpPreferenceId(preferenceId);
 
             if (optionalPayment.isEmpty()) {
-                log.error("Nenhum Payment encontrado para preference_id={}", preferenceId);
+                log.error("Nenhum Payment encontrado para mpPaymentId={} ou preferenceId={}", mpPaymentId, preferenceId);
                 return;
             }
 
             Payment payment = optionalPayment.get();
-
-            // --------------------------------------------------------------------
-            // ATUALIZAÇÃO DOS DADOS EXISTENTES NO BANCO
-            // --------------------------------------------------------------------
             payment.setStatus(status);
-
-            if (amount != null) {
-                payment.setAmount(amount);
-            }
+            payment.setMpPaymentId(mpPaymentId); // salva MP ID para futuros webhooks
 
             paymentRepository.save(payment);
 
-            log.info("Pagamento atualizado: id={}, status={}, amount={}",
-                    payment.getId(),
-                    payment.getStatus(),
-                    payment.getAmount()
-            );
+            log.info("Pagamento atualizado: id={}, status={}, statusDetail={}",
+                    payment.getId(), payment.getStatus());
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook MP", e);
+            log.error("Erro ao processar webhook Mercado Pago", e);
         }
 
         log.info("=== FINALIZADO ===");
     }
-
 }
+
+

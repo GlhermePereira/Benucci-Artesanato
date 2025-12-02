@@ -33,6 +33,7 @@ public class PaymentService {
     public PaymentResponseDTO createPayment(Order order) {
         try {
             // 1. Montagem dos itens
+
             List<Map<String, Object>> itemsList = new ArrayList<>();
             for (OrderItem item : order.getItems()) {
                 Map<String, Object> itemMap = new HashMap<>();
