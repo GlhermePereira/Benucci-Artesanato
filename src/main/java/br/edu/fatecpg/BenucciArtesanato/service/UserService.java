@@ -1,5 +1,7 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
+import br.edu.fatecpg.BenucciArtesanato.exception.InvalidDataException;
+import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
 import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.edu.fatecpg.BenucciArtesanato.record.dto.UserDTO;
 
-import java.util.Optional;
 import java.util.List;
 
 @Service
@@ -19,17 +20,20 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     /** Converte "admin" ou "ADMIN" → ROLE_ADMIN, senão ROLE_USER */
     private String mapRole(String rawRole) {
         if (rawRole == null) return "ROLE_USER";
-
-        String r = rawRole.toLowerCase();
-        return r.contains("admin") ? "ROLE_ADMIN" : "ROLE_USER";
+        return rawRole.toLowerCase().contains("admin") ? "ROLE_ADMIN" : "ROLE_USER";
     }
 
     public User searchByEmail(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        return user.orElse(null);
+           return userRepository.findByEmail(email)
+                  .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado para email: " + email));
     }
 
     // List all users
@@ -39,16 +43,15 @@ public class UserService {
 
     // Get by id
     public User getById(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        return user.orElse(null);
+      return userRepository.findById(id)
+              .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + id));
     }
 
     // Register new user
     public User registerUser(UserDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO não pode ser nulo");
-
+        if (dto == null) throw new InvalidDataException("DTO não pode ser nulo");
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Email já cadastrado");
+            throw new InvalidDataException("Email já cadastrado: " + dto.getEmail());
         }
 
         User user = User.builder()
@@ -64,23 +67,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // Authenticate
-    public User autenticar(String email, String senha) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (passwordEncoder.matches(senha, user.getPassword())) {
-                return user;
-            }
-        }
-        return null;
-    }
-
     // Update user
     public User updateUser(Long id, UserDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + id));
 
         if (dto.getName() != null) user.setName(dto.getName());
         if (dto.getEmail() != null) user.setEmail(dto.getEmail());
@@ -96,11 +86,26 @@ public class UserService {
 
 
     // Delete user
-    public boolean deleteUser(Long id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-            return true;
+    /** Deleta usuário ou lança exceção */
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Usuário não encontrado com id: " + id);
         }
-        return false;
+        userRepository.deleteById(id);
+    }
+
+    public User getByIdOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
+    }
+
+    public User getByEmailOrThrow(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com email: " + email));
+    }
+
+    public void deleteUserOrThrow(Long id) {
+        User user = getByIdOrThrow(id);
+        userRepository.delete(user);
     }
 }
