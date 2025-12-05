@@ -1,11 +1,14 @@
 package br.edu.fatecpg.BenucciArtesanato.controller;
 
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
+import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
 import br.edu.fatecpg.BenucciArtesanato.model.User;
 import br.edu.fatecpg.BenucciArtesanato.record.AuthResponse;
 import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
 import br.edu.fatecpg.BenucciArtesanato.service.AuthService;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.EmailAlreadyExistsException;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.InvalidPasswordException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -61,30 +64,24 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        System.out.println("📝 Tentativa de registro para: " + request.email());
         try {
             User user = authService.register(request);
             String token = jwtUtils.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(token, user));
 
-            System.out.println("✅ Usuário registrado com sucesso!");
-            AuthResponse response = new AuthResponse(token, user);
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException ex) {
-            System.err.println("❌ Dados inválidos: " + ex.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(ex.getMessage(), 400));
-
-        } catch (IllegalStateException ex) {
-            System.err.println("❌ Email já cadastrado: " + ex.getMessage());
+        } catch (EmailAlreadyExistsException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ErrorResponse(ex.getMessage(), 409));
 
+        } catch (IllegalArgumentException ex) { // validacoes do UserValidator
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(ex.getMessage(), 400));
+
         } catch (Exception ex) {
-            System.err.println("❌ Erro inesperado no registro: " + ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Erro interno. Contate o administrador.", 500));
         }
+
     }
 
     @Operation(summary = "Login de usuário", description = "Autentica um usuário e retorna um token JWT")
@@ -106,29 +103,23 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        System.out.println("🔐 Tentativa de login para: " + request.email());
         try {
             String token = authService.login(request);
             User user = authService.getUserByEmail(request.email());
+            return ResponseEntity.ok(new AuthResponse(token, user));
 
-            System.out.println("✅ Login bem-sucedido!");
-            AuthResponse response = new AuthResponse(token, user);
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException ex) {
-            System.err.println("❌ Credenciais inválidas: " + ex.getMessage());
+        } catch (InvalidPasswordException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse(ex.getMessage(), 401));
 
-        } catch (IllegalStateException ex) {
-            System.err.println("❌ Usuário não encontrado: " + ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse(ex.getMessage(), 404));
 
         } catch (Exception ex) {
-            System.err.println("❌ Erro inesperado no login: " + ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Erro interno. Contate o administrador.", 500));
         }
+
     }
 }
