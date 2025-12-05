@@ -1,8 +1,10 @@
 package br.edu.fatecpg.BenucciArtesanato.service;
 
+import br.edu.fatecpg.BenucciArtesanato.exception.ResourceNotFoundException;
 import br.edu.fatecpg.BenucciArtesanato.model.Theme;
 import br.edu.fatecpg.BenucciArtesanato.record.dto.ThemeInputDTO;
 import br.edu.fatecpg.BenucciArtesanato.repository.ThemeRepository;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.DuplicateResourceException;
 import br.edu.fatecpg.BenucciArtesanato.util.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,14 +15,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThemeService {
 
+
     private final ThemeRepository themeRepository;
 
     // =============================
-    // Criar Tema
-    // =============================
+// Criar Tema
+// =============================
     public ThemeInputDTO createTheme(ThemeInputDTO dto) {
         if (themeRepository.existsByName(dto.getName())) {
-            throw new IllegalStateException("Já existe um tema com esse nome.");
+            throw new DuplicateResourceException("Já existe um tema com esse nome.");
         }
 
         Theme theme = Theme.builder()
@@ -34,14 +37,14 @@ public class ThemeService {
     }
 
     // =============================
-    // Atualizar Tema
-    // =============================
+// Atualizar Tema
+// =============================
     public ThemeInputDTO updateTheme(Long id, ThemeInputDTO dto) {
         Theme theme = themeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tema não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tema não encontrado"));
 
         if (!theme.getName().equals(dto.getName()) && themeRepository.existsByName(dto.getName())) {
-            throw new IllegalStateException("Já existe outro tema com esse nome.");
+            throw new DuplicateResourceException("Já existe outro tema com esse nome.");
         }
 
         theme.setName(dto.getName());
@@ -53,18 +56,18 @@ public class ThemeService {
     }
 
     // =============================
-    // Deletar Tema
-    // =============================
+// Deletar Tema
+// =============================
     public void deleteTheme(Long id) {
         if (!themeRepository.existsById(id)) {
-            throw new RuntimeException("Tema não encontrado");
+            throw new ResourceNotFoundException("Tema não encontrado");
         }
         themeRepository.deleteById(id);
     }
 
     // =============================
-    // Listar Todos os Temas
-    // =============================
+// Listar Todos os Temas
+// =============================
     public List<ThemeInputDTO> getAllThemes() {
         return themeRepository.findAllByOrderByNameAsc().stream()
                 .map(this::mapToDto)
@@ -72,8 +75,8 @@ public class ThemeService {
     }
 
     // =============================
-    // Mapper
-    // =============================
+// Mapper
+// =============================
     private ThemeInputDTO mapToDto(Theme theme) {
         return ThemeInputDTO.builder()
                 .id(theme.getId())
@@ -82,4 +85,6 @@ public class ThemeService {
                 .description(theme.getDescription())
                 .build();
     }
+
+
 }
