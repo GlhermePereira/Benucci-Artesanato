@@ -7,6 +7,7 @@ import br.edu.fatecpg.BenucciArtesanato.record.LoginRequest;
 import br.edu.fatecpg.BenucciArtesanato.record.RegisterRequest;
 import br.edu.fatecpg.BenucciArtesanato.repository.UserRepository;
 import br.edu.fatecpg.BenucciArtesanato.config.JwtUtils;
+import br.edu.fatecpg.BenucciArtesanato.service.exception.EmailAlreadyExistsException;
 import br.edu.fatecpg.BenucciArtesanato.service.exception.InvalidPasswordException;
 import br.edu.fatecpg.BenucciArtesanato.service.validation.UserValidator;
 import org.springframework.boot.CommandLineRunner;
@@ -29,17 +30,19 @@ public class AuthService {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
-        this.validator = validator; // agora funciona
+        this.validator = validator;
     }
-
 
     public User register(RegisterRequest request) {
 
+        validator.validateRegister(request);
+
+        repository.findByEmail(request.email())
+                .ifPresent(u -> { throw new EmailAlreadyExistsException(request.email()); });
+
         // role padrão
         String role = "ROLE_USER";
-
-        // se vier "admin", vira ROLE_ADMIN
-        if (request.role() != null && request.role().equalsIgnoreCase("admin")) {
+        if ("admin".equalsIgnoreCase(request.role())) {
             role = "ROLE_ADMIN";
         }
 
@@ -58,25 +61,11 @@ public class AuthService {
 
 
 
+
     public User getUserByEmail(String email) {
         return repository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
-
-    public String authenticateUser(LoginRequest request) {
-        User user = repository.findByEmail(request.email())
-                .orElseThrow(() -> new ResourceNotFoundException("User not founded: " + request.email()));
-
-        if (!encoder.matches(request.password(), user.getPassword())) {
-            throw new InvalidPasswordException("Senha inválida para o usuário: " + request.email());
-        }
-
-        return jwtUtils.generateToken(user);
-    }
-
-
-
-
 
     public String login(LoginRequest request) {
         User user = repository.findByEmail(request.email())
@@ -88,6 +77,7 @@ public class AuthService {
 
         return jwtUtils.generateToken(user);
     }
+
 
 
 
