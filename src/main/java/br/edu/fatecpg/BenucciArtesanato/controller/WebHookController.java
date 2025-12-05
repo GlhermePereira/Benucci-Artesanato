@@ -1,6 +1,8 @@
 package br.edu.fatecpg.BenucciArtesanato.controller;
 
 import br.edu.fatecpg.BenucciArtesanato.service.PaymentWebhookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,19 +14,27 @@ import java.util.Map;
 @RequestMapping("/webhook")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Webhooks", description = "Endpoints para recebimento de webhooks externos, incluindo Mercado Pago")
 public class WebHookController {
 
     private final PaymentWebhookService paymentWebhookService;
 
+    @Operation(
+            summary = "Receber Webhook do Mercado Pago",
+            description = "Recebe notificações reais enviadas pelo Mercado Pago e delega para o serviço responsável pelo processamento."
+    )
     @PostMapping("/mercadopago")
     public ResponseEntity<String> receiveMercadoPagoWebhook(
             @RequestBody Map<String, Object> body,
             @RequestHeader Map<String, String> headers) {
 
-        log.info("===== WEBHOOK MERCADO PAGO RECEBIDO =====");
-        log.info("HEADERS RECEBIDOS: {}", headers);
-        log.info("PAYLOAD COMPLETO: {}", body);
+        log.info("===== [WEBHOOK] Mercado Pago recebido =====");
 
+        // Logs de segurança e auditoria
+        log.info("HEADERS: {}", headers);
+        log.info("PAYLOAD: {}", body);
+
+        // Extrai alguns campos apenas para logging
         Object action = body.get("action");
         Object type = body.get("type");
 
@@ -34,34 +44,17 @@ public class WebHookController {
 
         String dataId = (data != null && data.get("id") != null)
                 ? data.get("id").toString()
-                : "Nao informado";
+                : "Não informado";
 
         log.info("ACTION: {}", action);
         log.info("TYPE: {}", type);
         log.info("DATA.ID: {}", dataId);
 
-        // CHAMA O SERVICE REAL (agora corretamente)
+        // Processamento real no service
         paymentWebhookService.processWebHook(body);
 
-        log.info("===== FIM DO WEBHOOK =====");
+        log.info("===== [WEBHOOK] Processamento finalizado =====");
 
         return ResponseEntity.ok("Webhook recebido");
-    }
-
-
-    @PostMapping("/mercadopago-teste")
-    public ResponseEntity<String> receiveTestWebhook(
-            @RequestParam(value = "data.id", required = false) String dataId,
-            @RequestParam(value = "type", required = false) String type,
-            @RequestBody(required = false) Map<String, Object> payload,
-            @RequestHeader(value = "x-signature", required = false) String signature) {
-
-        log.info("===== WEBHOOK TESTE RECEBIDO =====");
-        log.info("data.id: {}", dataId);
-        log.info("type: {}", type);
-        log.info("signature: {}", signature);
-        log.info("payload: {}", payload);
-
-        return ResponseEntity.ok("Webhook de teste recebido");
     }
 }

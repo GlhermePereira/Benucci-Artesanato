@@ -22,7 +22,7 @@ public class SubCategoryService {
     private final SubcategoryRepository subcategoryRepository;
     private final CategoryRepository categoryRepository;
 
-    // =============================
+// =============================
 // LISTAR POR CATEGORIA
 // =============================
     public List<SubcategoryDto> getSubcategoriesByCategory(Long categoryId) {
@@ -36,7 +36,7 @@ public class SubCategoryService {
                 .toList();
     }
 
-    // =============================
+// =============================
 // CRIAR SUBCATEGORY
 // =============================
     public SubcategoryDto createSubcategory(Long categoryId, SubcategoryDto dto) {
@@ -69,7 +69,7 @@ public class SubCategoryService {
         return mapToDto(subcategoryRepository.save(sub));
     }
 
-    // =============================
+// =============================
 // ATUALIZAR SUBCATEGORY
 // =============================
     public SubcategoryDto updateSubcategory(Long categoryId, Long subcategoryId, SubcategoryDto dto) {
@@ -96,7 +96,7 @@ public class SubCategoryService {
         return mapToDto(subcategoryRepository.save(sub));
     }
 
-    // =============================
+// =============================
 // DELETAR SUBCATEGORY
 // =============================
     public void deleteSubcategory(Long categoryId, Long subcategoryId) {
@@ -108,11 +108,13 @@ public class SubCategoryService {
         }
 
         subcategoryRepository.delete(sub);
+
     }
 
-    // =============================
+// =============================
 // MAPPER
 // =============================
+
     private SubcategoryDto mapToDto(SubCategory sub) {
         return SubcategoryDto.builder()
                 .id(sub.getId())

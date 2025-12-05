@@ -1,92 +1,74 @@
 [
   {
-    "name": "Lucca Matheus Pereira",
-    "email": "luccamatheuspereira@gmail.com",
-    "password": "QqXhRGU161",
-    "phoneNumber": "(96) 2516-1477",
-    "address": "Rua Eli Rodrigues, 120, Centro, Manaus, AM",
-    "type": "customer",
-    "cpf": "296.191.227-04"
+    "name": "João Administrador",
+    "email": "j@email.com",
+    "password": "$2a$10$PtTVaSFhz2tKb5yadhTl8e9MOsnAokg0xaHKq3DIK6if3zr6V4cFy",
+    "phoneNumber": "11999998888",
+    "address": "{\"street\":\"Av. Central\",\"number\":\"500\",\"complement\":\"\",\"neighborhood\":\"São Paulo\",\"city\":\"\",\"state\":\"\",\"zipCode\":\"\"}",
+    "role": "ROLE_ADMIN",
+    "cpf": "98765432100"
   },
   {
-    "name": "Ana Clara Souza",
-    "email": "anaclara.souza@gmail.com",
-    "password": "AnaC2025!",
-    "phoneNumber": "(11) 91234-5678",
-    "address": "Rua das Flores, 123, Jardim Paulista, São Paulo, SP",
-    "type": "customer",
-    "cpf": "123.456.789-09"
+    "name": "Guilherme Pereira Cardoso",
+    "email": "g@email.com",
+    "password": "$2a$10$6HEumGRYLCwfzM0FHhi9c.gi5e9uRT9LY4O8r4sYVPYBjpfSZ4ohC",
+    "phoneNumber": "13988120276",
+    "address": "{\"street\":\"Jsjzjzjxjx\",\"number\":\"61\",\"complement\":\"Lá perto\",\"neighborhood\":\"Morro Do Sufoco\",\"city\":\"Praia Grande\",\"state\":\"SP\",\"zipCode\":\"11725010\"}",
+    "role": "ROLE_ADMIN",
+    "cpf": "48999107035"
   },
   {
-    "name": "Bruno Henrique Lima",
-    "email": "bruno.lima@hotmail.com",
-    "password": "BrunoL!23",
-    "phoneNumber": "(21) 99876-5432",
-    "address": "Avenida Atlântica, 456, Copacabana, Rio de Janeiro, RJ",
-    "type": "customer",
-    "cpf": "987.654.321-00"
+    "name": "Antônio Cardoso ",
+    "email": "a@email.com",
+    "password": "$2a$10$xi60sfmSLsr3xehBDeit3uHEJMUyO3I7F.1RHk8gsXiC.Sh95CuVu",
+    "phoneNumber": "13988240276",
+    "address": "{\"street\":\"Rua Severino Fernandes Dos Santos\",\"number\":\"564\",\"complement\":\"Casa\",\"neighborhood\":\"Tude Bastos\",\"city\":\"Praia Grande\",\"state\":\"SP\",\"zipCode\":\"11725010\"}",
+    "role": "ROLE_USER",
+    "cpf": "22505131040"
   },
   {
-    "name": "Carla Beatriz Santos",
-    "email": "carla.santos@gmail.com",
-    "password": "CarlaB2025",
-    "phoneNumber": "(31) 93456-7890",
-    "address": "Rua do Sol, 78, Lourdes, Belo Horizonte, MG",
-    "type": "customer",
-    "cpf": "321.654.987-11"
+    "name": "Alvaro Costa",
+    "email": "alvarocosta@gmail.com",
+    "password": "$2a$10$eFtkhZ9jLIk2AMZJuwONFeq8PyN8CB4RlLWxlpCy40HOwkct4uiiy",
+    "phoneNumber": "11694832056",
+    "address": "{\"street\":\"Avenida General Bento Gonçalves\",\"number\":\"423\",\"complement\":\"\",\"neighborhood\":\"Senador Hélio Campos\",\"city\":\"Boa Vista\",\"state\":\"RR\",\"zipCode\":\"69316390\"}",
+    "role": "ROLE_USER",
+    "cpf": "56524183037"
   },
   {
-    "name": "Diego Rafael Oliveira",
-    "email": "diego.oliveira@gmail.com",
-    "password": "DiegoR@2025",
-    "phoneNumber": "(41) 91234-0000",
-    "address": "Rua das Palmeiras, 9, Centro, Curitiba, PR",
-    "type": "customer",
-    "cpf": "456.789.123-22"
+    "name": "Felipe Augusto Silva",
+    "email": "felipaosilva@gmail.com",
+    "password": "$2a$10$0J/0lVYkkjNKhhW7DmYYceq2AkQibhlssXwKIu42AyvxRZ/dsC1NW",
+    "phoneNumber": "13545545487",
+    "address": "{\"street\":\"Rua Dovindo da Silva\",\"number\":\"653\",\"complement\":\"Casa\",\"neighborhood\":\"Canto do Forte\",\"city\":\"Praia Grande\",\"state\":\"SP\",\"zipCode\":\"11713500\"}",
+    "role": "ROLE_USER",
+    "cpf": "45745089067"
   },
   {
-    "name": "Fernanda Lima Costa",
-    "email": "fernanda.costa@hotmail.com",
-    "password": "Fern@nda2025",
-    "phoneNumber": "(51) 99888-7777",
-    "address": "Avenida Central, 321, Porto Alegre, RS",
-    "type": "customer",
-    "cpf": "654.321.987-33"
+    "name": "Admin",
+    "email": "admin@gmail.com",
+    "password": "$2a$10$o4V3KJrUxLLQ/nQwInIDGuD6.57M/2sqvhsfqQf9V9tymSI0kBYAy",
+    "phoneNumber": "13989898989",
+    "address": "{\"street\":\"Rua Francisco Loria\",\"number\":\"375\",\"complement\":\"Casa\",\"neighborhood\":\"Mirim\",\"city\":\"Pria Grande\",\"state\":\"SP\",\"zipCode\":\"11534855\"}",
+    "role": "ROLE_ADMIN",
+    "cpf": "02205876040"
   },
   {
-    "name": "Gabriel Martins Souza",
-    "email": "gabriel.souza@gmail.com",
-    "password": "GabrielM!25",
-    "phoneNumber": "(61) 91234-4321",
-    "address": "Rua Nova Esperança, 12, Asa Sul, Brasília, DF",
-    "type": "customer",
-    "cpf": "789.123.456-44"
+    "name": "Benício Kaique da Paz",
+    "email": "benicio_dapaz@patriciagrillo.adv.br",
+    "password": "$2a$10$xxfPEezRf7vAFc49a6O0YOT8CXIY5RXNwEpiXa2p/vzXblgBHvMBe",
+    "phoneNumber": "(84) 2752-6328",
+    "address": "Rua Professora Dirce Coutinho, 493 , Capim Macio Natal-RN",
+    "role": "ROLE_USER",
+    "cpf": "680.732.824-96"
   },
   {
-    "name": "Helena Rodrigues",
-    "email": "helena.rodrigues@gmail.com",
-    "password": "Hel3naR2025",
-    "phoneNumber": "(71) 92345-6789",
-    "address": "Rua das Acácias, 50, Pituba, Salvador, BA",
-    "type": "customer",
-    "cpf": "159.753.486-55"
-  },
-  {
-    "name": "Igor Fernandes",
-    "email": "igor.fernandes@gmail.com",
-    "password": "Ig0rF3rn25",
-    "phoneNumber": "(81) 93456-7891",
-    "address": "Rua das Laranjeiras, 15, Boa Viagem, Recife, PE",
-    "type": "customer",
-    "cpf": "753.159.486-66"
-  },
-  {
-    "name": "Julia Andrade",
-    "email": "julia.andrade@gmail.com",
-    "password": "Jul!And2025",
-    "phoneNumber": "(91) 91234-8765",
-    "address": "Rua do Comércio, 88, Nazaré, Belém, PA",
-    "type": "customer",
-    "cpf": "951.357.852-77"
+    "name": "Mario Sérgio Ramos",
+    "email": "m@email.com",
+    "password": "$2a$10$kTbnckzPAofHmIwCsYM2AOgPNU0Eimat0puwH1C/2CdD7LdKgL2Pe",
+    "phoneNumber": "13988120276",
+    "address": "{\"street\":\"Receba\",\"number\":\"633\",\"complement\":\"Hdhdhdhxb djj.\",\"neighborhood\":\"Udjdjdjdj D. Rd\",\"city\":\"Peruíbe\",\"state\":\"SP\",\"zipCode\":\"11725010\"}",
+    "role": "ROLE_USER",
+    "cpf": "99236555047"
   }
 ]
