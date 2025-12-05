@@ -11,12 +11,12 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "http://localhost:3000",     // React dev server
-                        "http://127.0.0.1:3000",    // React dev server alternativo
-                        "http://192.168.1.198:3000", // Se o frontend estiver neste IP
-                        "http://localhost:8081",     // Expo/React Native
-                        "http://192.168.1.198:8081",  // Expo/React Native no IP local
-                        "https://benucci-artesanato.onrender.com", // 🌍 domínio do backend no Render
+                        "http://localhost:3000",
+                        "http://127.0.0.1:3000",
+                        "http://192.168.1.198:3000",
+                        "http://localhost:8081",
+                        "http://192.168.1.198:8081",
+                        "https://benucci-artesanato.onrender.com",
                         "https://benucci-artesanato.onrender.com/swagger-ui.html"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
